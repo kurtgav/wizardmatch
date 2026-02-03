@@ -47,8 +47,8 @@ const config: Config = {
   emailService: process.env.EMAIL_SERVICE || 'gmail',
   emailUser: process.env.EMAIL_USER || '',
   emailPassword: process.env.EMAIL_PASSWORD || '',
-  adminEmail: process.env.ADMIN_EMAIL || 'admin@mcl.edu.ph',
-  supportEmail: process.env.SUPPORT_EMAIL || 'support@mcl.edu.ph',
+  adminEmail: process.env.ADMIN_EMAIL || 'admin@wizardmatch.ai',
+  supportEmail: process.env.SUPPORT_EMAIL || 'support@wizardmatch.ai',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   backendUrl: process.env.BACKEND_URL || 'http://localhost:3001',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
@@ -56,7 +56,7 @@ const config: Config = {
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880', 10),
   uploadDir: process.env.UPLOAD_DIR || './uploads',
   matchReleaseDate: process.env.MATCH_RELEASE_DATE || new Date().toISOString(),
-  allowedDomains: process.env.ALLOWED_DOMAINS?.split(',') || ['mcl.edu.ph', 'mapua.edu.ph'],
+  allowedDomains: process.env.ALLOWED_DOMAINS?.split(',') || [],
 };
 
 // Validate required environment variables

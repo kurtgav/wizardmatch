@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { Heart, Sparkles, Shield, Users, Zap, Ghost, Gamepad2, Wand2 } from 'lucide-react';
+import { Heart, Flower2, Shield, Users, Zap, Ghost, Gamepad2, Wand2 } from 'lucide-react';
 
 export default function AboutPage() {
   return (
@@ -41,13 +41,13 @@ export default function AboutPage() {
                   <p className="font-pixel text-xs text-white">
                     OUR STORY
                   </p>
-                  <Sparkles className="w-5 h-5 text-retro-yellow" />
+                  <Flower2 className="w-5 h-5 text-retro-yellow" />
                 </div>
               </motion.div>
 
               <h1 className="font-display font-black text-5xl md:text-6xl text-navy mb-6">
                 About{' '}
-                <span className="text-cardinal-red bg-retro-pink px-3">Perfect Match</span>
+                <span className="text-cardinal-red bg-retro-pink px-3">Wizard Match</span>
               </h1>
               <p className="font-body text-xl text-navy/80 leading-relaxed max-w-2xl mx-auto">
                 Finding your perfect wizard match since 2026. Built with magical love for all Wizards!
@@ -84,10 +84,10 @@ export default function AboutPage() {
 
               <div className="space-y-4 text-navy">
                 <p className="font-body text-lg leading-relaxed">
-                  Perfect Match was created to bring Wizards together in a meaningful way. Inspired by similar programs at other universities, we wanted to create something special for our magical community.
+                  Wizard Match was created to bring Wizards together in a meaningful way. Inspired by similar programs at other universities, we wanted to create something special for our magical community.
                 </p>
                 <p className="font-body text-lg leading-relaxed">
-                  Our mission is simple: help students find genuine connections based on compatibility, shared values, and common interests. Whether you're looking for love, friendship, or just want to meet new people, Perfect Match is here to help.
+                  Our mission is simple: help students find genuine connections based on compatibility, shared values, and common interests. Whether you're looking for love, friendship, or just want to meet new people, Wizard Match is here to help.
                 </p>
                 <p className="font-body text-lg leading-relaxed">
                   We believe that everyone deserves to find their people. That's why we built a smart, thoughtful matching system that considers who you are, what you value, and what you're looking for.
@@ -128,7 +128,7 @@ export default function AboutPage() {
                   step: '2',
                   title: 'Take Survey',
                   description: 'Answer 30 magical questions',
-                  icon: Sparkles,
+                  icon: Flower2,
                   color: 'bg-retro-sky',
                 },
                 {

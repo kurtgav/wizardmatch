@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Heart, Sparkles, Wand2, ArrowRight } from 'lucide-react';
+import { Heart, Flower2, Wand2, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
@@ -52,25 +52,9 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  // Get target date for countdown based on campaign phase
+  // Target Valentine's Day 2026
   const getCountdownTarget = () => {
-    if (!campaign) return null;
-
-    const phase = campaign.phase;
-    switch (phase) {
-      case 'pre_launch':
-        return campaign.surveyOpenDate;
-      case 'survey_open':
-        return campaign.surveyCloseDate;
-      case 'survey_closed':
-        return campaign.profileUpdateStartDate;
-      case 'profile_update':
-        return campaign.resultsReleaseDate;
-      case 'results_released':
-        return campaign.resultsReleaseDate;
-      default:
-        return campaign.surveyCloseDate;
-    }
+    return new Date('2026-02-14T00:00:00');
   };
 
   const countdownTarget = getCountdownTarget();
@@ -79,25 +63,9 @@ export default function HomePage() {
     <div className="min-h-screen">
       <Header />
 
-      {/* Campaign Banner */}
-      {campaign && (
-        <div className="container mx-auto px-4 py-4">
-          <CampaignBanner
-            phase={campaign.phase}
-            nextPhaseLabel={campaign.nextPhaseLabel}
-          />
-        </div>
-      )}
 
-      {/* Countdown Timer */}
-      {countdownTarget && campaign?.phase !== 'results_released' && (
-        <div className="container mx-auto px-4 pb-4">
-          <CountdownTimer
-            targetDate={new Date(countdownTarget)}
-            label={campaign.nextPhaseLabel}
-          />
-        </div>
-      )}
+
+
 
       <main>
         {/* Hero Section */}
@@ -172,12 +140,12 @@ export default function HomePage() {
                       >
                         <Wand2 className="w-4 h-4 text-navy" />
                       </motion.div>
-                      The Magic Awaits
+                      The Garden Awaits
                       <motion.div
                         animate={{ rotate: [0, -10, 10, 0] }}
                         transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                       >
-                        <Sparkles className="w-4 h-4 text-navy" />
+                        <Flower2 className="w-4 h-4 text-navy" />
                       </motion.div>
                     </span>
                   </div>
@@ -243,8 +211,8 @@ export default function HomePage() {
                 transition={{ delay: 0.6 }}
                 className="font-body text-lg md:text-xl text-navy/80 mb-10 max-w-3xl mx-auto"
               >
-                Join Mapúa MCL Wizards in the ultimate Valentine
-                matchmaking experience. Let our Love Witch work her magic on your destiny!
+                Join Wizards in the ultimate Valentine matchmaking experience.
+                Let our Love Witch work her magic on your destiny!
               </motion.p>
 
               {/* CTA Buttons */}
@@ -285,7 +253,7 @@ export default function HomePage() {
                     >
                       💖
                     </motion.span>
-                    Sign in with Google Account + Student ID required
+                    Sign in with any Google Account
                     <motion.span
                       animate={{ scale: [1, 1.2, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity, delay: 0.75 }}

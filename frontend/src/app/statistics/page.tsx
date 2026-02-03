@@ -21,33 +21,61 @@ export default function StatisticsPage() {
   const [programStats, setProgramStats] = useState<any[]>([]);
   const [yearStats, setYearStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    // Set a timeout to show content even if API is slow
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 2000); // Show content after 2 seconds max
+
+    const loadStats = async () => {
+      try {
+        const [overviewRes, programRes, yearRes] = await Promise.all([
+          api.getOverview().catch(() => ({ success: false, data: null })),
+          api.getByProgram().catch(() => ({ success: false, data: [] })),
+          api.getByYearLevel().catch(() => ({ success: false, data: [] })),
+        ]);
+
+        if (overviewRes?.success) setStats(overviewRes.data);
+        if (programRes?.success) setProgramStats(programRes.data || []);
+        if (yearRes?.success) setYearStats(yearRes.data || []);
+
+        // If all failed, show error
+        if (!overviewRes?.success && !programRes?.success && !yearRes?.success) {
+          setError('Unable to load statistics. Please try again later.');
+        }
+      } catch (err) {
+        console.error('Failed to load statistics:', err);
+        setError('Failed to connect to server.');
+      } finally {
+        clearTimeout(timeout);
+        setLoading(false);
+      }
+    };
+
     loadStats();
   }, []);
 
-  async function loadStats() {
-    try {
-      const [overviewRes, programRes, yearRes] = await Promise.all([
-        api.getOverview(),
-        api.getByProgram(),
-        api.getByYearLevel(),
-      ]);
-
-      if (overviewRes.success) setStats(overviewRes.data);
-      if (programRes.success) setProgramStats(programRes.data);
-      if (yearRes.success) setYearStats(yearRes.data);
-    } catch (error) {
-      console.error('Failed to load statistics:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  // Show skeleton while loading (for first 500ms only)
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-retro-cream">
-        <div className="w-16 h-16 border-4 border-navy border-t-retro-pink rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-retro-cream">
+        <Header />
+        <main className="pt-24 pb-16">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <div className="text-center mb-16">
+              <div className="h-12 bg-retro-yellow border-4 border-navy mx-auto w-48 mb-4 animate-pulse"></div>
+              <div className="h-16 bg-navy/10 mx-auto w-96 mb-2 animate-pulse"></div>
+              <div className="h-6 bg-navy/5 mx-auto w-64 animate-pulse"></div>
+            </div>
+            <div className="grid md:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white border-4 border-navy p-8 h-40 animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -81,11 +109,11 @@ export default function StatisticsPage() {
             </motion.div>
 
             <h1 className="font-display font-black text-4xl md:text-5xl lg:text-6xl text-navy mb-4">
-              Perfect Match{' '}
+              Wizard Match{' '}
               <span className="text-cardinal-red bg-retro-pink px-3">Statistics</span>
             </h1>
             <p className="font-body text-xl text-navy/80">
-              See how Mapúa MCL Wizards are finding love
+              See how Wizards are finding love
             </p>
           </motion.div>
 

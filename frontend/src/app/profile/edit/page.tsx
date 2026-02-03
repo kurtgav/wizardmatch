@@ -1,60 +1,46 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useAuthState } from '@/hooks/useAuthState';
 import { ProfileEditor } from '@/components/profile/ProfileEditor';
-import { getActiveCampaign, updateProfile } from '@/lib/api-campaign';
+import { updateProfile } from '@/lib/api-campaign';
+
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
 export const dynamic = 'force-dynamic';
 
 export default function ProfileEditPage() {
-  const sessionResult = useSession();
+  const { user, loading: authLoading } = useAuthState();
   const router = useRouter();
-  const [campaign, setCampaign] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  // Handle build-time undefined session
-  if (!sessionResult) {
-    return null;
-  }
-
-  const { data: session, status } = sessionResult;
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+      return;
+    }
+
     const loadData = async () => {
       try {
-        const [campaignRes] = await Promise.all([
-          getActiveCampaign(),
-        ]);
-
-        if (!campaignRes.success || !campaignRes.data) {
-          setError('No active campaign found');
-          return;
-        }
-
-        const phase = campaignRes.data.phase;
-        // Only allow profile editing during survey_open or profile_update
-        if (phase !== 'survey_open' && phase !== 'profile_update') {
-          setError('Profile editing is not currently available.');
-          return;
-        }
-
-        setCampaign(campaignRes.data);
-
         // Load user profile from API or session
-        if (session?.user) {
+        if (user) {
           // For now, initialize with empty values - will load from API
           setProfile({
-            bio: '',
-            profilePhotoUrl: session.user.image || '',
-            instagramHandle: '',
-            phoneNumber: '',
-            contactPreference: 'Instagram',
-            profileVisibility: 'Matches Only',
+            username: user.username || '',
+            bio: user.bio || '',
+            profilePhotoUrl: user.profilePhotoUrl || '',
+            instagramHandle: user.instagramHandle || '',
+            socialMediaName: user.socialMediaName || '',
+            phoneNumber: user.phoneNumber || '',
+            contactPreference: (user.contactPreference as any) === 'Email' ? 'Instagram' : user.contactPreference || 'Instagram',
+            profileVisibility: user.profileVisibility || 'Matches Only',
           });
         }
       } catch (err: any) {
@@ -64,59 +50,73 @@ export default function ProfileEditPage() {
       }
     };
 
-    if (status === 'authenticated') {
+    if (user) {
       loadData();
     }
-  }, [status]);
+  }, [user, authLoading, router]);
 
   const handleSave = async (data: any) => {
     setSaving(true);
     setError('');
+    setSuccess('');
     try {
       await updateProfile(data);
 
-      // Show success message
-      const message = campaign?.phase === 'profile_update'
-        ? 'Profile updated! Your matches will see your updated profile.'
-        : 'Profile saved!';
+      setSuccess('Profile saved successfully!');
+      setSaving(false);
 
-      router.push('/survey/complete?message=' + encodeURIComponent(message));
+      // Still allow redirect after a delay if desired, but here we stay on page
+      // scroll to top to see message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      setTimeout(() => setSuccess(''), 5000);
     } catch (err: any) {
       setError(err.message || 'Failed to update profile');
       setSaving(false);
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-xl font-semibold text-red-800 mb-2">Unable to Edit Profile</h2>
-          <p className="text-red-600">{error}</p>
+      <div className="min-h-screen flex flex-col bg-retro-cream">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-cardinal-red border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     );
   }
 
-  const isReadOnly = campaign?.phase !== 'survey_open' && campaign?.phase !== 'profile_update';
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <ProfileEditor
-          profile={profile || {}}
-          onSave={handleSave}
-          isReadOnly={isReadOnly}
-        />
-      </div>
+    <div className="min-h-screen flex flex-col bg-retro-cream">
+      <Header />
+
+      <main className="flex-1 container mx-auto pt-32 pb-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          {error && (
+            <div className="bg-white border-4 border-navy p-6 mb-8 shadow-[8px_8px_0_0_#1E3A8A] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-8 h-8 bg-retro-pink border-l-4 border-b-4 border-navy" />
+              <h2 className="font-pixel text-lg text-cardinal-red mb-2 uppercase tracking-tighter">Notice</h2>
+              <p className="font-body text-navy">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-white border-4 border-navy p-6 mb-8 shadow-[8px_8px_0_0_#1E3A8A] relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-8 h-8 bg-retro-mint border-l-4 border-b-4 border-navy" />
+              <h2 className="font-pixel text-lg text-retro-mint mb-2 uppercase tracking-tighter">Success</h2>
+              <p className="font-body text-navy">{success}</p>
+            </div>
+          )}
+
+          <ProfileEditor
+            profile={profile || {}}
+            onSave={handleSave}
+          />
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

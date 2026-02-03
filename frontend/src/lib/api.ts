@@ -1,14 +1,30 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-// Helper function for authenticated API calls using NextAuth cookies
+// Helper function to get auth token
+function getAuthToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token');
+  }
+  return null;
+}
+
+// Helper function for authenticated API calls
 async function fetchAPI(url: string, options: RequestInit = {}) {
+  const token = getAuthToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   return fetch(url, {
     ...options,
-    credentials: 'include', // Include cookies for NextAuth session
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    credentials: 'include',
+    headers,
   });
 }
 
@@ -126,6 +142,19 @@ class ApiClient {
   async getByYearLevel() {
     return this.get<{ success: boolean; data: any[] }>(
       '/api/analytics/year-levels'
+    );
+  }
+
+  // Testimonial endpoint (public)
+  async submitTestimonial(data: {
+    authorName: string;
+    program?: string;
+    title?: string;
+    content: string;
+  }) {
+    return this.post<{ success: boolean; data: any; message: string }>(
+      '/api/public/testimonials',
+      data
     );
   }
 }

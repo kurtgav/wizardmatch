@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { Heart, MessageCircle, Star, Quote, Sparkles, Ghost, Gamepad2 } from 'lucide-react';
+import { Heart, MessageCircle, Star, Quote, Flower2, Ghost, Gamepad2, Loader2 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useToast } from '@/contexts/ToastContext';
 
 const testimonials = [
   {
     heading: 'Matched on values!',
-    content: 'We were matched 98% and it showed. We share the same values and goals. Thanks Perfect Match! We\'ve been dating for 6 months now and it\'s been amazing.',
+    content: 'We were matched 98% and it showed. We share the same values and goals. Thanks Wizard Match! We\'ve been dating for 6 months now and it\'s been amazing.',
     author: 'Anonymous Wizard',
     program: 'Computer Engineering',
     badge: '98%',
@@ -25,7 +27,7 @@ const testimonials = [
   },
   {
     heading: 'College romance done right',
-    content: 'Met my girlfriend through Perfect Match. We had no idea we had so much in common until the survey brought us together. Now we study together at the library every day!',
+    content: 'Met my girlfriend through Wizard Match. We had no idea we had so much in common until the survey brought us together. Now we study together at the library every day!',
     author: 'Engineering Lovebirds',
     program: 'Electrical Engineering',
     badge: '97%',
@@ -33,7 +35,7 @@ const testimonials = [
   },
   {
     heading: 'Made my college experience better',
-    content: 'I didn\'t find love, but I made my best friend through Perfect Match. We\'re now roommates and I couldn\'t imagine college without him!',
+    content: 'I didn\'t find love, but I made my best friend through Wizard Match. We\'re now roommates and I couldn\'t imagine college without him!',
     author: 'Grateful Wizard',
     program: 'Business Management',
     badge: '92%',
@@ -41,7 +43,7 @@ const testimonials = [
   },
   {
     heading: 'More than I expected',
-    content: 'Perfect Match helped me find someone who not only shares my interests but also challenges me to grow. We push each other to be better every day.',
+    content: 'Wizard Match helped me find someone who not only shares my interests but also challenges me to grow. We push each other to be better every day.',
     author: 'Nursing Student',
     program: 'Nursing',
     badge: '94%',
@@ -49,7 +51,7 @@ const testimonials = [
   },
   {
     heading: 'Great friendship too!',
-    content: 'Even though we decided to stay friends, my match introduced me to so many new people and experiences. Thank you Perfect Match!',
+    content: 'Even though we decided to stay friends, my match introduced me to so many new people and experiences. Thank you Wizard Match!',
     author: 'Social Butterfly',
     program: 'Accountancy',
     badge: '89%',
@@ -59,6 +61,45 @@ const testimonials = [
 
 export default function TestimonialsPage() {
   const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    authorName: '',
+    program: '',
+    title: '',
+    content: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { success, error } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.authorName.trim() || !formData.content.trim()) {
+      error('Name and story are required');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await api.submitTestimonial({
+        authorName: formData.authorName.trim() || 'Anonymous',
+        program: formData.program.trim() || undefined,
+        title: formData.title.trim() || undefined,
+        content: formData.content.trim(),
+      });
+
+      success('Story submitted! It will be reviewed before publishing.');
+      setFormData({ authorName: '', program: '', title: '', content: '' });
+
+      setTimeout(() => {
+        setShowForm(false);
+      }, 1500);
+    } catch (err: any) {
+      error(err.message || 'Failed to submit testimonial. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-retro-cream">
@@ -82,9 +123,9 @@ export default function TestimonialsPage() {
               <div className="flex items-center gap-3">
                 <Ghost className="w-5 h-5 text-white animate-bounce" />
                 <p className="font-pixel text-xs text-white">
-                  GHOST STORIES
+                  BLOOM STORIES
                 </p>
-                <Sparkles className="w-5 h-5 text-retro-yellow" />
+                <Flower2 className="w-5 h-5 text-retro-yellow" />
               </div>
             </motion.div>
 
@@ -252,7 +293,7 @@ export default function TestimonialsPage() {
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 2.5, repeat: Infinity }}
               >
-                <Sparkles className="w-8 h-8 text-retro-yellow" />
+                <Flower2 className="w-8 h-8 text-retro-yellow" />
               </motion.div>
 
               {/* Corner decorations */}
@@ -273,7 +314,7 @@ export default function TestimonialsPage() {
                   {'►'} SHARE YOUR TALE! {'◄'}
                 </h2>
                 <p className="font-body text-lg text-white/90 mb-8">
-                  Did you find love or friendship through Perfect Match? We want to hear about it!
+                  Did you find love or friendship through Wizard Match? We want to hear about it!
                 </p>
                 <motion.button
                   onClick={() => setShowForm(true)}
@@ -283,7 +324,7 @@ export default function TestimonialsPage() {
                 >
                   <MessageCircle className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                   <span>SUBMIT YOUR STORY</span>
-                  <Sparkles className="w-5 h-5 text-cardinal-red" />
+                  <Flower2 className="w-5 h-5 text-cardinal-red" />
                 </motion.button>
               </div>
             </div>
@@ -321,15 +362,18 @@ export default function TestimonialsPage() {
                   SHARE YOUR STORY
                 </h3>
 
-                <form className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="font-pixel text-xs text-navy block mb-2">
-                      YOUR NAME (OR ANONYMOUS)
+                      YOUR NAME (OR ANONYMOUS) <span className="text-cardinal-red">*</span>
                     </label>
                     <input
                       type="text"
+                      value={formData.authorName}
+                      onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
                       className="w-full p-3 border-4 border-navy bg-white focus:border-retro-pink focus:outline-none font-body"
                       placeholder="Enter your name"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -339,8 +383,11 @@ export default function TestimonialsPage() {
                     </label>
                     <input
                       type="text"
+                      value={formData.program}
+                      onChange={(e) => setFormData({ ...formData, program: e.target.value })}
                       className="w-full p-3 border-4 border-navy bg-white focus:border-retro-pink focus:outline-none font-body"
                       placeholder="Your program"
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -350,37 +397,55 @@ export default function TestimonialsPage() {
                     </label>
                     <input
                       type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       className="w-full p-3 border-4 border-navy bg-white focus:border-retro-pink focus:outline-none font-body"
                       placeholder="e.g., Matched on values!"
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div>
                     <label className="font-pixel text-xs text-navy block mb-2">
-                      YOUR STORY
+                      YOUR STORY <span className="text-cardinal-red">*</span>
                     </label>
                     <textarea
+                      value={formData.content}
+                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                       rows={5}
                       className="w-full p-3 border-4 border-navy bg-white focus:border-retro-pink focus:outline-none resize-none font-body"
-                      placeholder="Tell us about your Perfect Match experience..."
+                      placeholder="Tell us about your Wizard Match experience..."
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div className="flex gap-3 pt-4">
                     <motion.button
                       type="submit"
-                      className="flex-1 bg-retro-yellow text-navy px-6 py-3 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-retro-yellow text-navy px-6 py-3 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                      whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                     >
-                      SUBMIT STORY
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          SUBMITTING...
+                        </>
+                      ) : (
+                        'SUBMIT STORY'
+                      )}
                     </motion.button>
                     <motion.button
                       type="button"
-                      onClick={() => setShowForm(false)}
-                      className="flex-1 bg-white text-navy px-6 py-3 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setShowForm(false);
+                        setFormData({ authorName: '', program: '', title: '', content: '' });
+                      }}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-white text-navy px-6 py-3 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                      whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                     >
                       CANCEL
                     </motion.button>

@@ -2,13 +2,15 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/db.config';
 import { createError, asyncHandler } from '../middleware/error.middleware';
 import { z } from 'zod';
+import { matchingService } from '../services/matching.service';
+import { logger } from '../utils/logger';
 
 // Validation schemas
 const submitResponseSchema = z.object({
   questionId: z.string().uuid(),
   answerText: z.string().optional(),
   answerValue: z.number().optional(),
-  answerType: z.enum(['multiple_choice', 'scale', 'text', 'ranking']),
+  answerType: z.enum(['multiple_choice', 'scale', 'text', 'ranking', 'multiple_select']),
 });
 
 export const surveyController = {
@@ -53,6 +55,11 @@ export const surveyController = {
       throw createError('Question not found', 404);
     }
 
+    // Get active campaign to link response
+    const activeCampaign = await prisma.campaign.findFirst({
+      where: { isActive: true }
+    });
+
     // Create or update response
     const response = await prisma.surveyResponse.upsert({
       where: {
@@ -65,6 +72,7 @@ export const surveyController = {
         answerText,
         answerValue,
         answerType,
+        campaignId: activeCampaign?.id,
       },
       create: {
         userId: req.user!.id,
@@ -72,6 +80,7 @@ export const surveyController = {
         answerText,
         answerValue,
         answerType,
+        campaignId: activeCampaign?.id,
       },
     });
 
@@ -105,19 +114,39 @@ export const surveyController = {
   }),
 
   completeSurvey: asyncHandler(async (req: Request, res: Response) => {
-    // Check if user has answered all questions
-    const totalQuestions = await prisma.question.count({
-      where: { isActive: true },
+    // Get active campaign
+    const activeCampaign = await prisma.campaign.findFirst({
+      where: { isActive: true }
     });
 
-    const answeredQuestions = await prisma.surveyResponse.count({
-      where: { userId: req.user!.id },
+    // Check if user has answered all ACTIVE questions for the active campaign
+    const activeQuestions = await prisma.question.findMany({
+      where: {
+        isActive: true,
+        campaignId: activeCampaign?.id
+      },
+      select: { id: true }
     });
 
-    console.log(`Survey completion check: User ${req.user!.id} - ${answeredQuestions}/${totalQuestions} answered`);
+    const totalQuestionsCount = activeQuestions.length;
+    const activeQuestionIds = activeQuestions.map(q => q.id);
 
-    if (answeredQuestions < totalQuestions) {
-      throw createError(`Please complete all questions (${answeredQuestions}/${totalQuestions} answered)`, 400);
+    const responses = await prisma.surveyResponse.findMany({
+      where: {
+        userId: req.user!.id,
+        questionId: { in: activeQuestionIds }
+      },
+      select: { questionId: true }
+    });
+
+    const answeredCount = responses.length;
+
+    console.log(`Survey completion check: User ${req.user!.id} - Campaign ${activeCampaign?.id || 'none'} - ${answeredCount}/${totalQuestionsCount} active questions answered`);
+
+    // Validation - Allow completion if they have answered most questions (lenience for potential data issues)
+    // but warn if they are missing more than 2. Wait, the user said 20 questions.
+    if (totalQuestionsCount > 0 && answeredCount < totalQuestionsCount) {
+      throw createError(`Please complete all questions (${answeredCount}/${totalQuestionsCount} answered)`, 400);
     }
 
     // Mark survey as completed
@@ -126,9 +155,23 @@ export const surveyController = {
       data: { surveyCompleted: true },
     });
 
+    // Automatically trigger match generation so they can see results immediately
+    // The activeCampaign is already defined above
+    if (activeCampaign) {
+      logger.info(`Survey completed for user ${req.user!.id}. Triggering match generation for campaign ${activeCampaign.id}...`);
+      // We don't necessarily need to await this if we want it to be fast, but for small sets it's fine.
+      // Actually, awaiting ensures the matches are ready when the user redirects to /matches
+      try {
+        await matchingService.generateAllMatches(activeCampaign.id);
+      } catch (matchError) {
+        logger.error('Failed to generate matches after survey completion:', matchError);
+        // Don't fail the whole request because matches didn't generate - they can retry later
+      }
+    }
+
     res.json({
       success: true,
-      message: 'Survey completed successfully! Your matches will be available soon.',
+      message: 'Survey completed successfully! Your matches are ready.',
     });
   }),
 

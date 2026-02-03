@@ -24,6 +24,9 @@ router.delete('/questions/:questionId', adminController.deleteQuestion);
 // Match management
 router.post('/generate-matches', adminController.generateMatches);
 router.get('/matches', adminController.getAllMatches);
+router.post('/manual-match', adminController.createManualMatch);
+router.get('/eligible-users', adminController.getEligibleUsers);
+router.delete('/matches/:matchId', adminController.deleteMatch);
 
 // Settings
 router.put('/settings', adminController.updateSettings);

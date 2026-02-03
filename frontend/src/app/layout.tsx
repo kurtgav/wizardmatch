@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Commissioner, VT323 } from 'next/font/google';
 import './globals.css';
+import { ToastProvider } from '@/contexts/ToastContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,12 +25,12 @@ const vt323 = VT323({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
-  title: 'Mapúa MCL Perfect Match | Find Your Wizard Match',
-  description: 'Finding your perfect wizard match since 2026. Join Mapúa MCL\'s Valentine matchmaking platform and discover meaningful connections.',
-  keywords: ['Mapúa MCL', 'Perfect Match', 'Valentine', 'Dating', 'Matchmaking', 'Wizards'],
-  authors: [{ name: 'Mapúa MCL Perfect Match Team' }],
+  title: 'Wizard Match | Find Your Wizard Match',
+  description: 'Finding your perfect wizard match since 2026. Join our Valentine matchmaking platform and discover meaningful connections.',
+  keywords: ['Wizard Match', 'Valentine', 'Dating', 'Matchmaking', 'Wizards'],
+  authors: [{ name: 'Wizard Match Team' }],
   openGraph: {
-    title: 'Mapúa MCL Perfect Match',
+    title: 'Wizard Match',
     description: 'Finding your perfect wizard match since 2026',
     type: 'website',
     locale: 'en_US',
@@ -48,7 +49,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={`${inter.variable} ${commissioner.variable} ${vt323.variable} font-body antialiased`}>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

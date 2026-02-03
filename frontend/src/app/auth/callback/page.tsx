@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Heart, Ghost, Sparkles, AlertCircle } from 'lucide-react';
-import { signIn } from 'next-auth/react';
 
-export const dynamic = 'force-dynamic';
-
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -16,254 +13,83 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const error = searchParams.get('error');
-    const code = searchParams.get('code');
+    const token = searchParams.get('token');
+    const newUser = searchParams.get('newUser');
+    const testMode = searchParams.get('test');
 
     if (error) {
       setStatus('error');
-      setMessage('Authentication failed. Please try again.');
+      setMessage(searchParams.get('message') || 'Authentication failed. Please try again.');
       setTimeout(() => {
-        router.push('/auth/login');
-      }, 3000);
+        router.replace('/auth/login');
+      }, 2000);
       return;
     }
 
-    // Check if we have a session already (NextAuth handles this via cookies)
-    const checkSession = async () => {
-      try {
-        const res = await fetch('/api/auth/session');
-        if (res.ok) {
-          const session = await res.json();
-          if (session?.user) {
-            setStatus('success');
+    // Handle token
+    if (token) {
+      // Store token
+      localStorage.setItem('token', token);
+      setStatus('success');
 
-            // Redirect based on whether user has completed survey
-            setTimeout(() => {
-              if (session.user.surveyCompleted) {
-                router.push('/matches');
-              } else {
-                router.push('/survey');
-              }
-            }, 1500);
-            return;
-          }
+      // Redirect immediately or with short delay for feedback
+      const timer = setTimeout(() => {
+        if (newUser === 'true') {
+          router.replace('/survey');
+        } else {
+          router.replace('/matches');
         }
-      } catch (err) {
-        // No session yet, redirect to login
-      }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
 
-      setStatus('error');
-      setMessage('Authentication failed. Please try again.');
-      setTimeout(() => {
-        router.push('/auth/login');
-      }, 3000);
-    };
-
-    checkSession();
+    // If no token and not loading, we might be in a weird state
+    // But since it's in useEffect, we wait for params
   }, [searchParams, router]);
-
-  if (status === 'error') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-retro-cream">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full mx-auto px-4"
-        >
-          <div className="bg-white border-8 border-navy shadow-[12px_12px_0_0_#1E3A8A] p-8 text-center relative overflow-hidden">
-            {/* Error Icon */}
-            <motion.div
-              className="w-20 h-20 bg-retro-pink border-4 border-navy mx-auto mb-6 flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A]"
-              animate={{
-                scale: [1, 1.1, 1],
-                rotate: [0, -5, 5, 0],
-              }}
-              transition={{
-                duration: 0.5,
-                repeat: Infinity,
-              }}
-            >
-              <AlertCircle className="w-10 h-10 text-cardinal-red" />
-            </motion.div>
-
-            <h2 className="font-pixel text-xl text-navy mb-4">
-              AUTHENTICATION ERROR
-            </h2>
-
-            <p className="font-body text-navy/80 mb-6">
-              {message}
-            </p>
-
-            <p className="font-body text-sm text-navy/60">
-              Redirecting to login page...
-            </p>
-
-            {/* Loading dots */}
-            <div className="flex justify-center gap-2 mt-6">
-              {[...Array(3)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="w-3 h-3 bg-cardinal-red border-2 border-navy"
-                  animate={{
-                    scale: [1, 1.3, 1],
-                  }}
-                  transition={{
-                    duration: 0.8,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Corner decorations */}
-            <motion.div
-              className="absolute -top-2 -right-2 w-6 h-6 bg-retro-orange border-4 border-navy"
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-              }}
-            />
-            <motion.div
-              className="absolute -bottom-2 -left-2 w-6 h-6 bg-retro-mint border-4 border-navy"
-              animate={{
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: 1,
-              }}
-            />
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-retro-cream">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full mx-auto px-4"
-      >
-        <div className="bg-white border-8 border-navy shadow-[12px_12px_0_0_#1E3A8A] p-8 text-center relative overflow-hidden">
-          {/* Background pixel pattern */}
-          <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `
-                linear-gradient(to right, #1E3A8A 2px, transparent 2px),
-                linear-gradient(to bottom, #1E3A8A 2px, transparent 2px)
-              `,
-              backgroundSize: '16px 16px',
-            }} />
-          </div>
-
-          {/* Animated Logo */}
-          <motion.div
-            className="w-24 h-24 bg-retro-pink border-4 border-navy mx-auto mb-6 flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A] relative z-10"
-            animate={{
-              y: [0, -12, 0],
-              rotate: [0, 5, -5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          >
-            {status === 'loading' ? (
-              <div className="w-10 h-10 border-4 border-navy border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <Sparkles className="w-12 h-12 text-retro-yellow" />
-            )}
-          </motion.div>
-
-          <h2 className="font-pixel text-xl text-navy mb-4 relative z-10">
-            {status === 'loading' ? 'SIGNING YOU IN...' : 'SUCCESS!'}
-          </h2>
-
-          <p className="font-body text-navy/80 mb-6 relative z-10">
-            {status === 'loading'
-              ? 'Connecting to the magic portal...'
-              : 'Welcome, Wizard! Preparing your journey...'}
-          </p>
-
-          {/* Loading/Success Animation */}
-          <div className="flex justify-center gap-3 relative z-10">
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="w-4 h-4 bg-retro-yellow border-2 border-navy"
-                animate={{
-                  scale: status === 'loading' ? [1, 1.3, 1] : [1, 1, 1],
-                  y: status === 'loading' ? [0, -10, 0] : [0, 0, 0],
-                }}
-                transition={{
-                  duration: 0.8,
-                  repeat: status === 'loading' ? Infinity : 0,
-                  delay: i * 0.15,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Floating decorative elements */}
-          <motion.div
-            className="absolute top-4 right-4"
-            animate={{
-              y: [0, -8, 0],
-              rotate: [0, 15, -15, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-            }}
-          >
-            <Heart className="w-6 h-6 text-cardinal-red fill-current" />
-          </motion.div>
-
-          <motion.div
-            className="absolute bottom-4 left-4"
-            animate={{
-              y: [0, -8, 0],
-              rotate: [0, -15, 15, 0],
-            }}
-            transition={{
-              duration: 2.5,
-              repeat: Infinity,
-            }}
-          >
-            <Ghost className="w-6 h-6 text-retro-plum" />
-          </motion.div>
-
-          {/* Corner decorations */}
-          <motion.div
-            className="absolute -top-2 -right-2 w-6 h-6 bg-retro-orange border-4 border-navy"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-            }}
-          />
-          <motion.div
-            className="absolute -bottom-2 -left-2 w-6 h-6 bg-retro-mint border-4 border-navy"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              delay: 1,
-            }}
-          />
-        </div>
-      </motion.div>
+      <div className="bg-white border-8 border-navy shadow-[12px_12px_0_0_#1E3A8A] p-8 text-center max-w-md w-full mx-4">
+        {status === 'error' ? (
+          <>
+            <div className="w-16 h-16 bg-cardinal-red text-white border-4 border-navy mx-auto mb-4 flex items-center justify-center">
+              <AlertCircle size={32} />
+            </div>
+            <h2 className="font-pixel text-xl text-navy mb-2">ERROR</h2>
+            <p className="font-body text-navy/70 mb-4">{message}</p>
+            <p className="text-xs text-navy/40 uppercase">Redirecting to login...</p>
+          </>
+        ) : (
+          <>
+            <div className="w-16 h-16 bg-retro-pink border-4 border-navy mx-auto mb-4 flex items-center justify-center animate-bounce">
+              <Sparkles className="text-navy" size={32} />
+            </div>
+            <h2 className="font-pixel text-xl text-navy mb-2 uppercase">
+              {status === 'loading' ? 'Authenticating...' : 'Welcome Wizard!'}
+            </h2>
+            <p className="font-body text-navy/70">
+              {status === 'loading' ? 'Opening the magical portal...' : 'Preparing your journey...'}
+            </p>
+            <div className="flex justify-center gap-1 mt-4">
+              <div className="w-2 h-2 bg-retro-yellow border border-navy animate-ping"></div>
+              <div className="w-2 h-2 bg-retro-pink border border-navy animate-ping delay-100"></div>
+              <div className="w-2 h-2 bg-retro-sky border border-navy animate-ping delay-200"></div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-retro-cream">
+        <div className="font-pixel text-navy animate-pulse">LOADING MAGIC...</div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

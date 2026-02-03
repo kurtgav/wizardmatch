@@ -1,26 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Camera, Save, Eye, EyeOff } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Camera, Save, Eye, EyeOff, X, Check, Loader2, User, FileText, Globe, Phone, Instagram } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileEditorProps {
   profile: {
+    username?: string;
     bio?: string;
     profilePhotoUrl?: string;
     instagramHandle?: string;
+    socialMediaName?: string;
     phoneNumber?: string;
-    contactPreference?: 'Instagram' | 'Phone' | 'Email';
+    contactPreference?: 'Instagram' | 'Phone';
     profileVisibility?: 'Public' | 'Matches Only' | 'Private';
   };
   onSave: (data: {
+    username?: string;
     bio?: string;
     profilePhotoUrl?: string;
     instagramHandle?: string;
+    socialMediaName?: string;
     phoneNumber?: string;
-    contactPreference?: 'Instagram' | 'Phone' | 'Email';
+    contactPreference?: 'Instagram' | 'Phone';
     profileVisibility?: 'Public' | 'Matches Only' | 'Private';
   }) => Promise<void>;
   isReadOnly?: boolean;
@@ -33,38 +35,66 @@ export function ProfileEditor({
   isReadOnly = false,
   className = '',
 }: ProfileEditorProps) {
+  const [username, setUsername] = useState(profile.username || '');
   const [bio, setBio] = useState(profile.bio || '');
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(profile.profilePhotoUrl || '');
   const [instagramHandle, setInstagramHandle] = useState(profile.instagramHandle || '');
+  const [socialMediaName, setSocialMediaName] = useState(profile.socialMediaName || '');
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber || '');
-  const [contactPreference, setContactPreference] = useState<'Instagram' | 'Phone' | 'Email'>(
-    profile.contactPreference || 'Instagram'
+  const [contactPreference, setContactPreference] = useState<'Instagram' | 'Phone'>(
+    (profile.contactPreference as any) === 'Email' ? 'Instagram' : profile.contactPreference || 'Instagram'
   );
   const [profileVisibility, setProfileVisibility] = useState<'Public' | 'Matches Only' | 'Private'>(
     profile.profileVisibility || 'Matches Only'
   );
+
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setHasChanges(
+      username !== (profile.username || '') ||
       bio !== (profile.bio || '') ||
       profilePhotoUrl !== (profile.profilePhotoUrl || '') ||
       instagramHandle !== (profile.instagramHandle || '') ||
+      socialMediaName !== (profile.socialMediaName || '') ||
       phoneNumber !== (profile.phoneNumber || '') ||
       contactPreference !== (profile.contactPreference || 'Instagram') ||
       profileVisibility !== (profile.profileVisibility || 'Matches Only')
     );
-  }, [bio, profilePhotoUrl, instagramHandle, phoneNumber, contactPreference, profileVisibility, profile]);
+  }, [username, bio, profilePhotoUrl, instagramHandle, socialMediaName, phoneNumber, contactPreference, profileVisibility, profile]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size too large. Please select an image under 2MB.');
+      return;
+    }
+
+    setPhotoLoading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePhotoUrl(reader.result as string);
+      setPhotoLoading(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = async () => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
       await onSave({
-        bio: bio || undefined,
-        profilePhotoUrl: profilePhotoUrl || undefined,
-        instagramHandle: instagramHandle || undefined,
-        phoneNumber: phoneNumber || undefined,
+        username,
+        bio,
+        profilePhotoUrl,
+        instagramHandle,
+        socialMediaName,
+        phoneNumber,
         contactPreference,
         profileVisibility,
       });
@@ -75,188 +105,315 @@ export function ProfileEditor({
 
   if (isReadOnly) {
     return (
-      <Card className={`p-6 ${className}`}>
-        <h2 className="text-2xl font-bold mb-6">Your Profile</h2>
-        <div className="space-y-4">
-          {profile.profilePhotoUrl && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Profile Photo</label>
-              <img src={profile.profilePhotoUrl} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
+      <div className={`relative bg-white border-4 border-navy p-6 md:p-8 shadow-[8px_8px_0_0_#1E3A8A] ${className}`}>
+        {/* Corner Decorations */}
+        <div className="absolute top-2 right-2 w-4 h-4 bg-retro-pink border-2 border-navy" />
+        <div className="absolute bottom-2 left-2 w-4 h-4 bg-retro-yellow border-2 border-navy" />
+
+        <div className="flex items-center gap-6 mb-10 relative z-10">
+          <div className="relative">
+            <div className="w-24 h-24 border-4 border-navy overflow-hidden bg-retro-cream shadow-[4px_4px_0_0_#1E3A8A]">
+              {profile.profilePhotoUrl ? (
+                <img src={profile.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <User className="w-12 h-12 text-navy/20" />
+                </div>
+              )}
             </div>
-          )}
-          {profile.bio && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Bio</label>
-              <p className="text-gray-700">{profile.bio}</p>
+            {/* Pixel badge for read-only */}
+            <div className="absolute -bottom-2 -right-2 bg-retro-yellow border-2 border-navy px-2 py-0.5">
+              <p className="font-pixel text-[8px] text-navy">LEVEL 1</p>
             </div>
-          )}
-          <div className="text-sm text-gray-500">
-            <p>Contact Preference: {profile.contactPreference || 'Not set'}</p>
-            <p>Visibility: {profile.profileVisibility || 'Matches Only'}</p>
+          </div>
+          <div>
+            <h2 className="font-pixel text-xl text-navy mb-1 uppercase tracking-tight">
+              {profile.username || 'Mysterious Wizard'}
+            </h2>
+            <div className="inline-flex items-center gap-2 bg-retro-sky/10 border-2 border-dashed border-navy/20 px-3 py-1">
+              <Instagram className="w-3 h-3 text-navy/40" />
+              <p className="font-body text-xs text-navy/60">@{profile.instagramHandle || 'no_instagram'}</p>
+            </div>
           </div>
         </div>
-      </Card>
+
+        <div className="space-y-8 relative z-10">
+          {profile.bio && (
+            <div className="bg-retro-cream border-2 border-navy p-4">
+              <h3 className="font-pixel text-[10px] text-navy/40 uppercase mb-3">{'>>'} CHARACTER BIO</h3>
+              <p className="font-body text-sm text-navy leading-relaxed italic">"{profile.bio}"</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-white border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A]">
+              <p className="font-pixel text-[8px] text-navy/40 uppercase mb-1">CONTACT VIA</p>
+              <p className="font-pixel text-xs text-navy uppercase">{profile.contactPreference}</p>
+            </div>
+            <div className="p-4 bg-white border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A]">
+              <p className="font-pixel text-[8px] text-navy/40 uppercase mb-1">VISIBILITY</p>
+              <p className="font-pixel text-xs text-navy uppercase">{profile.profileVisibility}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className={`p-6 md:p-8 ${className}`}>
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Polish Your Profile ✨</h2>
-          <p className="text-gray-600">
-            Update your profile before matches see it. Make a great first impression!
+    <div className={`space-y-12 ${className}`}>
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="inline-block bg-retro-yellow border-4 border-navy px-6 py-2 shadow-[6px_6px_0_0_#1E3A8A] mb-4"
+        >
+          <p className="font-pixel text-xs text-navy uppercase tracking-widest">
+            CHARACTER CUSTOMIZATION
           </p>
-        </div>
+        </motion.div>
+        <h2 className="font-pixel text-3xl md:text-5xl text-navy tracking-tighter">
+          REFINE YOUR <span className="text-cardinal-red">WIZARD</span>
+        </h2>
+        <p className="font-body text-navy/60 max-w-md mx-auto italic">
+          Your profile is your magical signature. Make it represent the real you!
+        </p>
+      </div>
 
-        {/* Profile Photo */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Profile Photo URL</label>
-          <div className="flex items-center gap-4">
-            <Input
-              type="url"
-              placeholder="https://example.com/photo.jpg"
-              value={profilePhotoUrl}
-              onChange={(e) => setProfilePhotoUrl(e.target.value)}
-              className="flex-1"
-            />
-            {profilePhotoUrl && (
-              <img
-                src={profilePhotoUrl}
-                alt="Preview"
-                className="w-16 h-16 rounded-full object-cover border"
-                onError={() => setProfilePhotoUrl('')}
-              />
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Enter a URL to your photo. Use a clear, friendly photo!
-          </p>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Sidebar: Photo & Visibility */}
+        <div className="lg:col-span-1 space-y-8">
+          <div className="relative bg-white border-4 border-navy p-6 shadow-[6px_6px_0_0_#1E3A8A]">
+            <div className="flex flex-col items-center">
+              <label className="font-pixel text-[10px] text-navy/40 uppercase mb-6 tracking-widest">AVATAR PREVIEW</label>
 
-        {/* Bio */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">
-            Bio <span className="text-gray-400">(max 500 characters)</span>
-          </label>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value.slice(0, 500))}
-            placeholder="Tell your matches a bit about yourself..."
-            className="w-full px-3 py-2 border rounded-lg min-h-[120px] focus:outline-none focus:ring-2 focus:ring-pink-500"
-            maxLength={500}
-          />
-          <div className="flex justify-between mt-1">
-            <p className="text-xs text-gray-500">
-              Share your interests, hobbies, what you're looking for...
-            </p>
-            <span className="text-xs text-gray-400">{bio.length}/500</span>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="mb-6">
-          <h3 className="font-semibold mb-4">Contact Information</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Choose how you want your matches to contact you. Only share what you're comfortable with.
-          </p>
-
-          {/* Contact Preference */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Preferred Contact Method</label>
-            <div className="flex gap-4">
-              {(['Instagram', 'Phone', 'Email'] as const).map((method) => (
-                <button
-                  key={method}
-                  onClick={() => setContactPreference(method)}
-                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                    contactPreference === method
-                      ? 'border-pink-500 bg-pink-50 text-pink-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+              <div className="relative">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="w-44 h-44 border-8 border-navy overflow-hidden relative bg-retro-cream shadow-[8px_8px_0_0_#1E3A8A]"
                 >
-                  {method}
+                  {photoLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+                      <div className="w-8 h-8 border-4 border-retro-pink border-t-transparent animate-spin" />
+                    </div>
+                  ) : profilePhotoUrl ? (
+                    <img src={profilePhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-navy/10">
+                      <Camera className="w-16 h-16 mb-2" />
+                      <span className="font-pixel text-[8px]">EMPTY_SLOT</span>
+                    </div>
+                  )}
+                </motion.div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-4 -right-4 bg-retro-pink text-white p-4 border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                >
+                  <Camera className="w-6 h-6" />
+                </button>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+
+              <div className="mt-10 p-3 bg-retro-cream/50 border-2 border-dashed border-navy/20 w-full text-center">
+                <p className="font-pixel text-[8px] text-navy/40 uppercase">
+                  JPG/PNG/GIF {'<'} 2MB
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border-4 border-navy p-6 shadow-[6px_6px_0_0_#1E3A8A]">
+            <label className="font-pixel text-[10px] text-navy/40 uppercase mb-6 block tracking-widest">PRIVACY SETTINGS</label>
+            <div className="space-y-4">
+              {[
+                { value: 'Matches Only', icon: Eye, label: 'MATCHES ONLY', desc: 'Visible after match' },
+                { value: 'Public', icon: Globe, label: 'PUBLIC', desc: 'Visible to everyone' },
+                { value: 'Private', icon: EyeOff, label: 'PRIVATE', desc: 'Hidden from all' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setProfileVisibility(opt.value as any)}
+                  className={`w-full flex items-center gap-4 p-4 border-4 transition-all ${profileVisibility === opt.value
+                    ? 'border-navy bg-retro-sky text-navy shadow-[4px_4px_0_0_#1E3A8A]'
+                    : 'border-transparent hover:border-navy/20 hover:bg-retro-cream text-navy/60'
+                    }`}
+                >
+                  <opt.icon className="w-5 h-5 flex-shrink-0" />
+                  <div className="text-left">
+                    <p className="font-pixel text-[10px] uppercase truncate">{opt.label}</p>
+                    <p className="font-body text-[10px] opacity-60 truncate">{opt.desc}</p>
+                  </div>
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Instagram */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Instagram Handle</label>
-            <div className="flex items-center">
-              <span className="text-gray-500 mr-2">@</span>
-              <Input
-                type="text"
-                placeholder="username"
-                value={instagramHandle?.replace('@', '')}
-                onChange={(e) => setInstagramHandle(e.target.value)}
-              />
+        {/* Main Content: Info & Ethics */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A]">
+            <div className="space-y-8">
+              {/* Username & Social */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                    <User className="w-3 h-3 text-retro-pink" /> USERNAME
+                  </label>
+                  <input
+                    placeholder="E.g. StarGazer"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-pink transition-colors"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                    <Instagram className="w-3 h-3 text-retro-sky" /> INSTAGRAM
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-pixel text-navy/40">@</span>
+                    <input
+                      placeholder="username"
+                      value={instagramHandle?.replace('@', '')}
+                      onChange={(e) => setInstagramHandle(e.target.value)}
+                      className="w-full bg-retro-cream border-4 border-navy pl-10 p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-sky transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media Name */}
+              <div className="space-y-3">
+                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                  <Globe className="w-3 h-3 text-retro-mint" /> DISPLAY NAME
+                </label>
+                <input
+                  placeholder="E.g. Artie Wizard"
+                  value={socialMediaName}
+                  onChange={(e) => setSocialMediaName(e.target.value)}
+                  className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-mint transition-colors"
+                />
+              </div>
+
+              {/* Bio */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-end">
+                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="w-3 h-3 text-retro-yellow" /> CHARACTER BIO
+                  </label>
+                  <span className="font-pixel text-[8px] text-navy/20">{bio.length}/500</span>
+                </div>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value.slice(0, 500))}
+                  placeholder="Share your interests, hobbies, or what makes you unique..."
+                  className="w-full min-h-[160px] bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-yellow transition-colors resize-none"
+                />
+              </div>
+
+              {/* Contact Method */}
+              <div className="space-y-6 pt-6 border-t-4 border-navy/5">
+                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest">PREFERRED CONTACT</label>
+                <div className="flex flex-wrap gap-4">
+                  {[
+                    { value: 'Instagram', icon: Instagram, label: 'INSTAGRAM' },
+                    { value: 'Phone', icon: Phone, label: 'PHONE CALL' },
+                  ].map((method) => (
+                    <button
+                      key={method.value}
+                      onClick={() => setContactPreference(method.value as any)}
+                      className={`flex items-center gap-3 px-6 py-4 border-4 transition-all font-pixel text-[10px] ${contactPreference === method.value
+                        ? 'border-navy bg-navy text-white shadow-[4px_4px_0_0_#1E3A8A]'
+                        : 'border-navy/10 bg-retro-cream text-navy/40 hover:border-navy/40'
+                        }`}
+                    >
+                      <method.icon className="w-4 h-4" />
+                      {method.label}
+                    </button>
+                  ))}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {contactPreference === 'Phone' && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-6 bg-retro-cream border-4 border-navy border-dashed mt-2">
+                        <label className="font-pixel text-[10px] text-navy/40 uppercase mb-3 block">PHONE NUMBER</label>
+                        <input
+                          type="tel"
+                          placeholder="+1 234 567 8900"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          className="w-full bg-white border-4 border-navy p-4 font-body text-navy focus:outline-none"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
 
-          {/* Phone Number */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Phone Number</label>
-            <Input
-              type="tel"
-              placeholder="+1 234 567 8900"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Profile Visibility */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium mb-2">Profile Visibility</label>
-          <div className="space-y-2">
-            {[
-              { value: 'Matches Only', label: 'Matches Only', icon: Eye, desc: 'Only your matches can see your profile' },
-              { value: 'Private', label: 'Private', icon: EyeOff, desc: 'Profile hidden from everyone' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setProfileVisibility(option.value as any)}
-                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
-                  profileVisibility === option.value
-                    ? 'border-pink-500 bg-pink-50'
-                    : 'border-gray-200 hover:border-gray-300'
+          {/* Action Button */}
+          <div className="flex flex-col md:flex-row items-stretch gap-6">
+            <button
+              onClick={handleSave}
+              disabled={!hasChanges || isSaving}
+              className={`flex-1 font-pixel text-sm py-8 border-4 border-navy transition-all shadow-[8px_8px_0_0_#1E3A8A] flex items-center justify-center gap-4 ${hasChanges && !isSaving
+                ? 'bg-retro-pink text-white hover:bg-cardinal-red hover:translate-x-1 hover:translate-y-1 hover:shadow-none'
+                : 'bg-navy/10 text-navy/30 cursor-not-allowed shadow-none translate-x-1 translate-y-1'
                 }`}
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-5 h-5 border-4 border-white border-t-transparent animate-spin" />
+                  SAVING...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  UPDATE PROFILE
+                </>
+              )}
+            </button>
+
+            {hasChanges && !isSaving && (
+              <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                onClick={() => {
+                  setUsername(profile.username || '');
+                  setBio(profile.bio || '');
+                  setProfilePhotoUrl(profile.profilePhotoUrl || '');
+                  setInstagramHandle(profile.instagramHandle || '');
+                  setSocialMediaName(profile.socialMediaName || '');
+                  setPhoneNumber(profile.phoneNumber || '');
+                  setContactPreference((profile.contactPreference as any) === 'Email' ? 'Instagram' : profile.contactPreference || 'Instagram');
+                  setProfileVisibility(profile.profileVisibility || 'Matches Only');
+                }}
+                className="p-8 border-4 border-navy text-navy/40 hover:bg-retro-cream transition-colors shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+                title="Discard changes"
               >
-                <div className="flex items-center gap-3">
-                  <option.icon className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="font-medium">{option.label}</p>
-                    <p className="text-sm text-gray-500">{option.desc}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
+                <X className="w-6 h-6" />
+              </motion.button>
+            )}
           </div>
         </div>
-
-        {/* Save Button */}
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-semibold py-6"
-          size="lg"
-        >
-          {isSaving ? (
-            'Saving...'
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Save Profile
-            </>
-          )}
-        </Button>
-
-        <p className="text-center text-sm text-gray-500 mt-4">
-          You can update your profile until February 13, 11:59 PM
-        </p>
       </div>
-    </Card>
+    </div>
   );
+
 }

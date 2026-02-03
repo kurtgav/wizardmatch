@@ -3,7 +3,7 @@ import { config } from '../config/env.config';
 
 export const rateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMaxRequests,
+  max: config.nodeEnv === 'development' ? 10000 : config.rateLimitMaxRequests,
   message: {
     success: false,
     error: 'Too many requests, please try again later.',
@@ -11,11 +11,14 @@ export const rateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    if (config.nodeEnv === 'development') return true;
+
     // Skip rate limiting for health checks and auth routes
-    if (req.path === '/health') return true;
-    if (req.path?.startsWith('/api/auth')) return true;
-    if (req.path?.startsWith('/api/public')) return true;
-    if (req.path?.startsWith('/api/survey/questions')) return true;
+    const path = req.path || '';
+    if (path === '/health') return true;
+    if (path.startsWith('/api/auth') || path.startsWith('/auth')) return true;
+    if (path.startsWith('/api/public') || path.startsWith('/public')) return true;
+    if (path.startsWith('/api/survey/questions') || path.startsWith('/survey/questions')) return true;
     return false;
   },
 });

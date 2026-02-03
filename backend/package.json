@@ -1,7 +1,7 @@
 {
   "name": "perfect-match-backend",
   "version": "1.0.0",
-  "description": "Mapúa MCL Perfect Match Backend API",
+  "description": "Mapúa MCL Wizard Match Backend API",
   "main": "dist/server.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
@@ -23,7 +23,7 @@
     "matchmaking",
     "mapua-mcl"
   ],
-  "author": "Mapúa MCL Perfect Match Team",
+  "author": "Mapúa MCL Wizard Match Team",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.19.2",

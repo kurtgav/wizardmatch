@@ -2,286 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Commissioner:wght@400;500;600;700;800;900&family=VT323&family=Press+Start+2P:wght@400;700&display=swap');
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 350 78% 57%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 217 91% 60%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 350 78% 57%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%;
-
-    --radius: 0.5rem;
-  }
-
-  * {
-    border-color: hsl(var(--border));
-  }
-
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
 }
 
-@layer utilities {
-  /* Wavy Border Utilities */
-  .wave-top {
-    position: relative;
-  }
-
-  .wave-top::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 120px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%23FFB3C1' d='M0,64 Q360,0 720,64 T1440,64 L1440,120 L0,120 Z'/%3E%3C/svg%3E");
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-
-  .wave-bottom {
-    position: relative;
-  }
-
-  .wave-bottom::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 120px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%23FFB3C1' d='M0,64 Q360,0 720,64 T1440,64 L1440,120 L0,120 Z'/%3E%3C/svg%3E");
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-
-  /* Text Styles */
-  .text-stroke {
-    -webkit-text-stroke: 3px currentColor;
-  }
-
-  .text-stroke-lg {
-    -webkit-text-stroke: 4px currentColor;
-  }
-
-  /* Thick Border Utilities */
-  .border-thick {
-    border-width: 3px;
-  }
-
-  .border-thick-lg {
-    border-width: 4px;
-  }
-
-  /* Custom Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background-color: #FFD6E0;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #E52037;
-    border-radius: 9999px;
-  }
-
-  /* Animation Delays */
-  .animation-delay-200 {
-    animation-delay: 200ms;
-  }
-
-  .animation-delay-400 {
-    animation-delay: 400ms;
-  }
-
-  .animation-delay-600 {
-    animation-delay: 600ms;
-  }
-
-  .animation-delay-800 {
-    animation-delay: 800ms;
-  }
+::-webkit-scrollbar-track {
+  background-color: #FFFAF0;
+  border: 2px solid #1E3A8A;
 }
 
-/* Custom component styles */
-
-/* Retro Pixel-Art Button */
-.btn-retro {
-  background-color: white;
-  border: 4px solid #87CEEB;
-  border-radius: 0px;
-  padding: 1rem 1.75rem;
-  font-weight: 700;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.75rem;
-  color: #E52037;
-  box-shadow: 6px 6px 0 0 #1E3A8A;
-  transition: all 0.1s;
-  image-rendering: pixelated;
+::-webkit-scrollbar-thumb {
+  background-color: #FFB3C1;
+  border: 2px solid #1E3A8A;
 }
 
-.btn-retro:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 4px 4px 0 0 #1E3A8A;
-  background-color: #FFC0CB;
-}
-
-.btn-retro:active {
-  transform: translate(4px, 4px);
-  box-shadow: 2px 2px 0 0 #1E3A8A;
-}
-
-/* Retro Primary Button */
-.btn-primary {
-  background-color: white;
-  border: 4px solid #3B82F6;
-  border-radius: 0px;
-  padding: 1rem 1.75rem;
-  font-weight: 700;
-  color: #E52037;
-  box-shadow: 6px 6px 0 0 #1E3A8A;
-  transition: all 0.1s;
-}
-
-.btn-primary:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 4px 4px 0 0 #1E3A8A;
-}
-
-.btn-primary:active {
-  transform: translate(4px, 4px);
-  box-shadow: none;
-}
-
-/* Retro Outline Button */
-.btn-outline {
-  background-color: transparent;
-  border: 4px solid #E52037;
-  border-radius: 0px;
-  padding: 0.75rem 1.5rem;
-  font-weight: 700;
-  color: #E52037;
-  transition: all 0.3s;
-}
-
-.btn-outline:hover {
+::-webkit-scrollbar-thumb:hover {
   background-color: #E52037;
-  color: white;
-  transform: translate(2px, 2px);
-  box-shadow: 4px 4px 0 0 #1E3A8A;
 }
 
-/* Retro Card */
-.card-retro {
-  background-color: white;
-  border: 4px solid #87CEEB;
-  border-radius: 0px;
-  padding: 2.5rem;
-  box-shadow: 8px 8px 0 0 #E6E6FA;
-  transition: all 0.2s;
-  position: relative;
+/* Selection Styles */
+::selection {
+  background-color: #FFB3C1;
+  color: #1E3A8A;
 }
 
-.card-retro:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 10px 10px 0 0 #DDA0DD;
+/* Loading Animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.card-retro::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
-  background: repeating-linear-gradient(
-    90deg,
-    #FFC0CB,
-    #FFC0CB 4px,
-    transparent 4px,
-    transparent 8px
-  );
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s;
+/* Pulse Animation for Hearts */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
 }
 
-.card-retro:hover::before {
-  opacity: 0.3;
-}
-
-/* Traditional Match Card */
-.card-match {
-  background-color: white;
-  border: 4px solid #3B82F6;
-  border-radius: 1.75rem;
-  padding: 2.5rem;
-  box-shadow: 0 8px 0 0 #1E3A8A;
-  transition: all 0.3s;
-}
-
-.card-match:hover {
-  transform: translateY(-0.5rem);
-  box-shadow: 0 16px 0 0 #1E3A8A;
-}
-
-/* TV Screen Style */
-.tv-screen {
-  background-color: #0F172A;
-  border-radius: 0.75rem;
-  padding: 3rem;
-  font-family: var(--font-pixel), monospace;
-  color: white;
-  text-align: center;
-  font-size: 4rem;
-}
-
-/* Retro Pixel Font */
-@font-face {
-  font-family: 'VT323';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/vt323/v15/pxiKyp4ih6J0k4jhQ.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-/* 8-Bit Pixel Font */
-@font-face {
-  font-family: 'Press Start 2P';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/s/pressstart2p/v15/v8ldo9zJh态djEW0nCIx0w.woff2) format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+/* Custom Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
 }

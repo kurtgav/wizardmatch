@@ -15,7 +15,7 @@ export const emailService = {
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
     try {
       const info = await transporter.sendMail({
-        from: `"Perfect Match" <${config.emailUser}>`,
+        from: `"Wizard Match" <${config.emailUser}>`,
         to,
         subject,
         html,
@@ -45,11 +45,11 @@ export const emailService = {
       <body>
         <div class="container">
           <div class="header">
-            <h1>Welcome to Perfect Match! 💕</h1>
+            <h1>Welcome to Wizard Match! 💕</h1>
           </div>
           <div class="content">
             <p>Hi ${firstName}!</p>
-            <p>Welcome to Mapúa MCL Perfect Match! We're thrilled to have you join our community of Cardinals looking for meaningful connections.</p>
+            <p>Welcome to Wizard Match! We're thrilled to have you join our community of Wizards looking for meaningful connections.</p>
             <p>Here's what happens next:</p>
             <ol>
               <li>Complete the compatibility survey (takes about 15-20 minutes)</li>
@@ -61,18 +61,18 @@ export const emailService = {
             <a href="${config.frontendUrl}/survey" class="button">Start Survey</a>
             <p>Questions? Check out our FAQ or reply to this email.</p>
             <p>Good luck!</p>
-            <p>The Perfect Match Team</p>
+            <p>The Wizard Match Team</p>
           </div>
           <div class="footer">
-            <p>© 2026 Mapúa MCL Perfect Match. All rights reserved.</p>
-            <p>perfectmatch@mcl.edu.ph</p>
+            <p>© 2026 Wizard Match. All rights reserved.</p>
+            <p>admin@wizardmatch.ai</p>
           </div>
         </div>
       </body>
       </html>
     `;
 
-    await this.sendEmail(email, 'Welcome to Perfect Match! 🎉', html);
+    await this.sendEmail(email, 'Welcome to Wizard Match! 🎉', html);
   },
 
   async matchReleaseEmail(email: string, firstName: string, matchCount: number): Promise<void> {
@@ -95,19 +95,19 @@ export const emailService = {
           </div>
           <div class="content">
             <p>Hi ${firstName}!</p>
-            <p>Exciting news! Your Perfect Matches have been released!</p>
+            <p>Exciting news! Your Wizard Matches have been released!</p>
             <p>You have <strong>${matchCount}</strong> compatible matches waiting for you. Log in now to see who you matched with!</p>
             <a href="${config.frontendUrl}/matches" class="button">View My Matches</a>
             <p>Remember, your matches are ranked by compatibility, so start from the top and work your way down!</p>
             <p>Good luck and have fun!</p>
-            <p>The Perfect Match Team</p>
+            <p>The Wizard Match Team</p>
           </div>
         </div>
       </body>
       </html>
     `;
 
-    await this.sendEmail(email, 'Your Perfect Matches are here! 💕', html);
+    await this.sendEmail(email, 'Your Wizard Matches are here! 💕', html);
   },
 
   async surveyReminderEmail(email: string, firstName: string): Promise<void> {
@@ -130,17 +130,17 @@ export const emailService = {
           </div>
           <div class="content">
             <p>Hi ${firstName}!</p>
-            <p>You started the Perfect Match survey but haven't finished it yet. Don't miss your chance to find your matches!</p>
+            <p>You started the Wizard Match survey but haven't finished it yet. Don't miss your chance to find your matches!</p>
             <p>The survey takes about 15-20 minutes to complete and your answers will help us find your most compatible matches.</p>
             <a href="${config.frontendUrl}/survey" class="button">Complete Survey</a>
             <p>Matches will be released on February 5, 2026. Make sure you complete the survey before then!</p>
-            <p>The Perfect Match Team</p>
+            <p>The Wizard Match Team</p>
           </div>
         </div>
       </body>
       </html>
     `;
 
-    await this.sendEmail(email, 'Complete your Perfect Match survey!', html);
+    await this.sendEmail(email, 'Complete your Wizard Match survey!', html);
   },
 };

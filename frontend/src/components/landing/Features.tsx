@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Sparkles, Heart, TrendingUp, Wand2, Shield, Users, Zap, Gamepad2 } from 'lucide-react';
+import { Flower2, Heart, TrendingUp, Wand2, Shield, Users, Zap, Gamepad2 } from 'lucide-react';
 
 export default function Features() {
   const features = [
@@ -25,7 +25,7 @@ export default function Features() {
     {
       icon: TrendingUp,
       title: 'Success Stories',
-      description: 'Countless Mapúa MCL Wizards have found meaningful connections through Perfect Match.',
+      description: 'Countless Wizards have found meaningful connections through Wizard Match.',
       color: 'bg-retro-lavender',
       border: 'border-retro-plum',
       delay: 0.3,
@@ -41,7 +41,7 @@ export default function Features() {
     {
       icon: Users,
       title: 'Verified Community',
-      description: 'Only @mcl.edu.ph and @mapua.edu.ph emails. Our Love Witch ensures authenticity.',
+      description: 'Verified accounts. Our Love Witch ensures authenticity.',
       color: 'bg-retro-yellow',
       border: 'border-navy',
       delay: 0.5,
@@ -90,9 +90,8 @@ export default function Features() {
               delay: i * 0.3,
             }}
           >
-            <div className={`w-4 h-4 ${
-              i % 2 === 0 ? 'bg-retro-pink' : 'bg-retro-sky'
-            } border-2 border-navy`} />
+            <div className={`w-4 h-4 ${i % 2 === 0 ? 'bg-retro-pink' : 'bg-retro-sky'
+              } border-2 border-navy`} />
           </motion.div>
         ))}
       </div>
@@ -117,9 +116,9 @@ export default function Features() {
             <div className="flex items-center gap-3">
               <Gamepad2 className="w-5 h-5 text-navy" />
               <p className="font-pixel text-xs text-navy">
-                POWER-UPS & FEATURES
+                FLOWER-UPS & FEATURES
               </p>
-              <Sparkles className="w-5 h-5 text-cardinal-red" />
+              <Flower2 className="w-5 h-5 text-cardinal-red" />
             </div>
           </motion.div>
 
@@ -129,7 +128,7 @@ export default function Features() {
           </h2>
 
           <p className="font-body text-lg md:text-xl text-navy/80 max-w-3xl mx-auto">
-            Perfect Match uses a smart compatibility algorithm. Last year, we matched{' '}
+            Wizard Match uses a smart compatibility algorithm. Last year, we matched{' '}
             <span className="font-bold text-cardinal-red bg-retro-pink px-2">500+</span> Wizards!
           </p>
         </motion.div>

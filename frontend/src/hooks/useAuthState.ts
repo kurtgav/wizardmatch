@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export interface User {
   id: string;
   email: string;
+  username?: string;
   firstName: string;
   lastName: string;
   studentId: string;
@@ -14,6 +15,11 @@ export interface User {
   surveyCompleted: boolean;
   profilePhotoUrl?: string;
   bio?: string;
+  instagramHandle?: string;
+  socialMediaName?: string;
+  phoneNumber?: string;
+  contactPreference?: string;
+  profileVisibility?: string;
 }
 
 export function useAuthState() {

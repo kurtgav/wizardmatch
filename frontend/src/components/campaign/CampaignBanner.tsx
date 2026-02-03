@@ -14,29 +14,29 @@ interface CampaignBannerProps {
 const phaseConfig: Record<string, { title: string; description: string; emoji: string; action?: { text: string; href: string } }> = {
   pre_launch: {
     title: 'Get Ready for Wizard Match! 🪄',
-    description: 'The magic begins soon. Sign up opens February 5th!',
+    description: 'The magic begins soon. Sign up and find your destiny!',
     emoji: '✨',
   },
   survey_open: {
     title: 'Survey is Open! 📝',
-    description: 'Complete your survey to find your perfect matches. Closes February 10th!',
+    description: 'Complete your survey to find your perfect matches immediately!',
     emoji: '💕',
     action: { text: 'Take Survey', href: '/survey' },
   },
   survey_closed: {
-    title: 'Survey Closed - Matching in Progress 🔮',
-    description: 'We are finding your perfect matches. Results coming February 14th!',
+    title: 'Matching in Progress 🔮',
+    description: 'We are finding your perfect matches. Magic is happening!',
     emoji: '⚡',
   },
   profile_update: {
-    title: 'Profile Update Period - Start Chatting! ✨',
-    description: 'Your matches are ready! Polish your profile and start chatting before Valentine\'s Day!',
+    title: 'Start Chatting! ✨',
+    description: 'Your matches are ready! Polish your profile and start chatting!',
     emoji: '💬',
     action: { text: 'View Matches', href: '/matches' },
   },
   results_released: {
     title: 'Your Matches Are Here! 💕',
-    description: 'Valentine\'s Day has arrived! Check out your compatible matches!',
+    description: 'Valentine\'s is in the air! Check out your compatible matches!',
     emoji: '🎉',
     action: { text: 'View Matches', href: '/matches' },
   },

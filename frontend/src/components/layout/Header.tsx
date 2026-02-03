@@ -2,21 +2,37 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Heart, Sparkles, Wand2, Ghost } from 'lucide-react';
+import { Menu, X, Heart, Flower2, Ghost, User, LogOut, Settings, Activity, MessageCircle, BarChart2, Info, FileText, Gift, Home } from 'lucide-react';
+import { useAuthState } from '@/hooks/useAuthState';
 
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/statistics', label: 'Stats' },
-  { href: '/about', label: 'About' },
-  { href: '/testimonials', label: 'Stories' },
+// Define all navigation links as requested by the user
+const allLinks = [
+  { href: '/', label: 'Home', icon: Home, public: true },
+  { href: '/statistics', label: 'Stats', icon: BarChart2, public: true },
+  { href: '/about', label: 'About', icon: Info, public: true },
+  { href: '/testimonials', label: 'Stories', icon: Heart, public: true },
+  { href: '/survey', label: 'Form', icon: FileText, public: true },
+  { href: '/matches', label: 'Matches', icon: Heart, public: false },
+  { href: '/messages', label: 'Messages', icon: MessageCircle, public: false },
+  { href: '/crush-list', label: 'Crush List', icon: Gift, public: false },
+  { href: '/profile/edit', label: 'Profile', icon: User, public: false },
 ];
 
 export default function Header() {
+  const { user, loading } = useAuthState();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+
+  // For desktop, show public links + private links if logged in
+  const desktopLinks = allLinks.filter(link => link.public || (user && !link.public));
+
+  // For mobile menu, show ALL links
+  const mobileLinks = allLinks;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,10 +43,16 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
+  // Close menus when route changes
   useEffect(() => {
     setMobileMenuOpen(false);
+    setUserMenuOpen(false);
   }, [pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -40,266 +62,240 @@ export default function Header() {
   };
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-retro-cream/95 backdrop-blur-md border-b-4 border-navy shadow-[4px_4px_0_0_#1E3A8A]'
-          : 'bg-retro-cream/80 backdrop-blur-sm border-b-4 border-navy'
-      }`}
-    >
-      <nav className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Retro Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-3 group"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <motion.div
-              className="relative w-14 h-14 bg-retro-pink border-4 border-navy flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A]"
-              whileHover={{
-                rotate: [0, -5, 5, -5, 0],
-                y: -2,
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <span className="font-pixel text-lg text-navy font-bold">MM</span>
-
-              {/* Floating corner decoration */}
-              <motion.div
-                className="absolute -top-1 -right-1 w-4 h-4 bg-retro-yellow border-2 border-navy"
-                animate={{
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                }}
-              />
-            </motion.div>
-
-            <div className="hidden sm:block">
-              <div className="font-display font-bold text-xl text-navy leading-tight">
-                Perfect Match
-              </div>
-              <div className="flex items-center gap-1 text-xs text-cardinal-red">
-                <Wand2 className="w-3 h-3" />
-                <span className="font-pixel text-[10px]">By Mapúa MCL</span>
-              </div>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation - Retro Style */}
-          <div className="hidden lg:flex items-center gap-2">
-            {navLinks.map((link) => {
-              const active = isActive(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`relative px-4 py-2 font-pixel text-xs transition-all duration-300 ${
-                    active
-                      ? 'text-white bg-navy border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A]'
-                      : 'text-navy hover:text-white hover:bg-navy hover:border-4 hover:border-navy hover:shadow-[4px_4px_0_0_#1E3A8A]'
-                  }`}
-                >
-                  {link.label}
-                  {active && (
-                    <motion.div
-                      layoutId="activeNav"
-                      className="absolute bottom-1 left-1/2 -translate-x-1/2 w-6 h-1 bg-retro-yellow"
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Desktop CTA - Retro Button */}
-          <div className="hidden md:flex items-center gap-3">
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled
+          ? 'bg-retro-cream border-b-4 border-navy shadow-[4px_4px_0_0_#1E3A8A]'
+          : 'bg-retro-cream border-b-4 border-navy'
+          }`}
+      >
+        <nav className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between">
+            {/* Logo Section */}
             <Link
-              href="/matches"
-              className="relative inline-flex items-center gap-2 bg-retro-yellow text-navy px-5 py-2.5 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all duration-300 group"
+              href="/"
+              className="flex items-center gap-3 group"
+              onClick={() => setMobileMenuOpen(false)}
             >
-              <span className="flex items-center gap-2">
-                MATCHES
-                <Heart className="w-4 h-4 fill-cardinal-red text-cardinal-red animate-pulse" />
-              </span>
-              {/* Animated pixel corner */}
               <motion.div
-                className="absolute top-0 right-0 w-3 h-3 bg-cardinal-red"
-                animate={{
-                  scale: [1, 0, 1],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                }}
-              />
+                className="relative w-12 h-12 md:w-14 md:h-14 bg-retro-sky border-4 border-navy flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A] p-2"
+                whileHover={{ rotate: [0, -5, 5, -5, 0], y: -2 }}
+                transition={{ duration: 0.3 }}
+              >
+                <img src="/images/wizardmatch-logo.png" alt="Logo" className="w-full h-full object-contain" />
+                <motion.div
+                  className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 bg-retro-yellow border-2 border-navy"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </motion.div>
+
+              <div className="hidden sm:block">
+                <div className="font-display font-black text-xl text-navy leading-tight uppercase tracking-tight">
+                  Wizard Match
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-cardinal-red font-pixel">
+                  <Flower2 className="w-3 h-3" />
+                  <span>EST 2026</span>
+                </div>
+              </div>
             </Link>
-          </div>
 
-          {/* Mobile Menu Button - Retro Style */}
-          <motion.button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden relative p-2.5 text-navy bg-retro-yellow border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A] hover:shadow-[2px_2px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all duration-300"
-            whileTap={{ scale: 0.95 }}
-            aria-label="Toggle menu"
-          >
-            <AnimatePresence mode="wait">
-              {mobileMenuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <X className="w-6 h-6" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Menu className="w-6 h-6" />
-                </motion.div>
+            {/* DESKTOP NAVIGATION - Visible only on XL+ */}
+            <div className="hidden xl:flex items-center gap-2">
+              {desktopLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`relative px-4 py-2 font-display font-black text-sm tracking-tight transition-all duration-300 border-4 border-transparent ${active
+                      ? 'text-navy bg-retro-yellow border-navy shadow-[3px_3px_0_0_#1E3A8A]'
+                      : 'text-navy hover:bg-white hover:border-navy hover:shadow-[3px_3px_0_0_#1E3A8A] opacity-80 hover:opacity-100'
+                      }`}
+                  >
+                    {link.label.toUpperCase()}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* ACTIONS SECTION */}
+            <div className="flex items-center gap-4">
+              {/* Desktop User Dropdown */}
+              {!loading && user && (
+                <div className="hidden xl:relative xl:block">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-3 bg-white px-4 py-2 border-4 border-navy font-display font-black text-sm shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
+                  >
+                    <div className="w-6 h-6 bg-retro-pink border-2 border-navy overflow-hidden">
+                      {user.profilePhotoUrl ? (
+                        <img src={user.profilePhotoUrl} alt={user.firstName} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-full h-full p-1 text-navy" />
+                      )}
+                    </div>
+                    <span className="uppercase">{user.firstName}</span>
+                  </button>
+
+                  <AnimatePresence>
+                    {userMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 mt-2 w-56 bg-white border-4 border-navy shadow-[8px_8px_0_0_#1E3A8A] z-[110]"
+                      >
+                        <div className="p-3 border-b-4 border-navy/10 bg-retro-cream/30">
+                          <p className="font-pixel text-[9px] text-navy/50 uppercase tracking-widest">Portal Access</p>
+                          <p className="font-display font-black text-sm text-navy truncate">{user.email}</p>
+                        </div>
+                        <div className="p-1">
+                          <Link href="/profile/edit" className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-navy hover:bg-retro-yellow transition-colors">
+                            <Settings className="w-4 h-4" /> EDIT PROFILE
+                          </Link>
+                          {user.email === 'kurtgavin.design@gmail.com' && (
+                            <Link href="/admin/dashboard" className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-navy hover:bg-retro-sky transition-colors">
+                              <Activity className="w-4 h-4" /> ADMIN PANEL
+                            </Link>
+                          )}
+                          <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-cardinal-red hover:bg-red-50 transition-colors border-t-2 border-navy/5 mt-1">
+                            <LogOut className="w-4 h-4" /> LOGOUT
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
-            </AnimatePresence>
-          </motion.button>
-        </div>
-      </nav>
 
-      {/* Mobile Menu Overlay */}
+              {/* Login Button for Desktop */}
+              {!loading && !user && (
+                <Link
+                  href="/auth/login"
+                  className="hidden xl:inline-flex bg-cardinal-red text-white px-6 py-2 border-4 border-navy font-display font-black text-sm shadow-[4px_4px_0_0_#1E3A8A] hover:bg-red-600 transition-all uppercase tracking-tight"
+                >
+                  Sign In
+                </Link>
+              )}
+
+              {/* MOBILE BURGER BUTTON - Hidden on Desktop (xl) */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="xl:hidden relative w-12 h-12 flex items-center justify-center bg-white border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+              >
+                <Menu className="w-7 h-7 text-navy" />
+              </button>
+            </div>
+          </div>
+        </nav>
+      </header>
+
+      {/* FULL SCREEN MOBILE OVERLAY */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-navy/20 backdrop-blur-sm z-40 lg:hidden"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 w-full h-full bg-retro-cream z-[200] flex flex-col pt-24"
+          >
+            {/* Background Grid */}
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `linear-gradient(to right, #1E3A8A 2px, transparent 2px), linear-gradient(to bottom, #1E3A8A 2px, transparent 2px)`,
+                backgroundSize: '40px 40px',
+              }} />
+            </div>
+
+            {/* Close Button - Square Box with Shadow */}
+            <button
               onClick={() => setMobileMenuOpen(false)}
-            />
-
-            {/* Retro Mobile Menu Panel */}
-            <motion.div
-              initial={{ x: '100%', opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-80 max-w-full bg-retro-cream border-l-4 border-navy shadow-2xl z-50 lg:hidden overflow-y-auto"
+              className="absolute top-6 right-6 w-14 h-14 bg-white border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A] flex items-center justify-center z-[210] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
             >
-              {/* Mobile Menu Header */}
-              <div className="sticky top-0 bg-retro-cream border-b-4 border-navy px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-retro-pink border-4 border-navy flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A]">
-                    <span className="font-pixel text-sm text-navy font-bold">WM</span>
-                  </div>
-                  <div>
-                    <div className="font-display font-bold text-lg text-navy">
-                      Perfect Match
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-cardinal-red">
-                      <Wand2 className="w-3 h-3" />
-                      <span className="font-pixel text-[10px]">By Mapúa MCL</span>
-                    </div>
-                  </div>
-                </div>
+              <X className="w-8 h-8 text-cardinal-red stroke-[4]" />
+            </button>
 
-                <motion.button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-navy bg-retro-yellow border-4 border-navy shadow-[4px_4px_0_0_#1E3A8A] hover:shadow-[2px_2px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all duration-300"
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="Close menu"
-                >
-                  <X className="w-5 h-5" />
-                </motion.button>
-              </div>
+            {/* Menu Items Container */}
+            <div className="flex-1 overflow-y-auto px-6 pb-20 relative z-10">
+              <div className="flex flex-col gap-4 max-w-lg mx-auto">
+                <p className="font-pixel text-[10px] text-navy/30 mb-2 uppercase tracking-[0.3em] text-center">System Navigation</p>
 
-              {/* Mobile Menu Links - Pixel Style */}
-              <div className="px-6 py-6 space-y-3">
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Ghost className="w-4 h-4 text-cardinal-red" />
-                    <p className="font-pixel text-xs text-navy/60 uppercase">
-                      Navigation
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    {navLinks.map((link, index) => {
-                      const active = isActive(link.href);
-                      return (
-                        <motion.div
-                          key={link.href}
-                          initial={{ x: 20, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <Link
-                            href={link.href}
-                            className={`flex items-center gap-3 px-4 py-3 border-4 border-navy font-pixel text-xs transition-all duration-300 ${
-                              active
-                                ? 'bg-navy text-white shadow-[4px_4px_0_0_#1E3A8A]'
-                                : 'bg-white text-navy hover:bg-retro-yellow hover:shadow-[4px_4px_0_0_#1E3A8A]'
-                            }`}
-                          >
+                {mobileLinks.map((link, index) => {
+                  const active = isActive(link.href);
+                  const isPrivate = !link.public;
+                  const isLocked = isPrivate && !user;
+
+                  return (
+                    <motion.div
+                      key={link.href}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      <Link
+                        href={isLocked ? '/auth/login' : link.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`group flex items-center h-20 bg-white border-4 border-navy transition-all relative ${active
+                          ? 'shadow-[6px_6px_0_0_#E52037] -translate-x-1 -translate-y-1'
+                          : 'shadow-[4px_4px_0_0_#1E3A8A] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#1E3A8A]'
+                          }`}
+                      >
+                        {/* Icon Box - MATCHING USER IMAGE */}
+                        <div className={`w-16 h-full border-r-4 border-navy flex items-center justify-center transition-colors ${active ? 'bg-retro-pink' : 'bg-white group-hover:bg-retro-cream'
+                          }`}>
+                          {link.icon && <link.icon className={`w-8 h-8 ${active ? 'text-navy' : 'text-navy/60 group-hover:text-navy'}`} />}
+                        </div>
+
+                        {/* Text Label */}
+                        <div className="flex-1 px-6">
+                          <span className={`text-2xl font-display font-black uppercase tracking-tight ${active ? 'text-navy' : 'text-navy/80'}`}>
                             {link.label}
-                            {active && <Heart className="w-4 h-4 fill-retro-yellow ml-auto" />}
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                          </span>
+                        </div>
+
+                        {/* Status Checkbox */}
+                        <div className="pr-6">
+                          {isLocked ? (
+                            <Ghost className="w-5 h-5 text-navy/20" />
+                          ) : active ? (
+                            <div className="w-4 h-4 bg-retro-yellow border-2 border-navy animate-pulse" />
+                          ) : (
+                            <div className="w-4 h-4 border-2 border-navy opacity-10" />
+                          )}
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+
+                {/* Footer Actions in Mobile Menu */}
+                <div className="mt-8">
+                  {user ? (
+                    <motion.button
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      onClick={handleLogout}
+                      className="flex items-center justify-center gap-3 w-full bg-navy text-white border-4 border-navy py-5 font-display font-black text-sm shadow-[6px_6px_0_0_#E52037]"
+                    >
+                      <LogOut className="w-5 h-5 text-retro-yellow" /> DISCONNECT
+                    </motion.button>
+                  ) : (
+                    <Link
+                      href="/auth/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-center gap-3 w-full bg-retro-yellow text-navy border-4 border-navy py-5 font-display font-black text-sm shadow-[6px_6px_0_0_#1E3A8A]"
+                    >
+                      <User className="w-5 h-5" /> MEMBER LOGIN
+                    </Link>
+                  )}
                 </div>
-
-                {/* Mobile CTA - Retro Button */}
-                <motion.div
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="pt-4 border-t-4 border-navy"
-                >
-                  <Link
-                    href="/matches"
-                    className="flex items-center justify-center gap-2 w-full bg-retro-yellow text-navy border-4 border-navy px-6 py-4 font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all duration-300"
-                  >
-                    <span>VIEW MATCHES</span>
-                    <Heart className="w-5 h-5 fill-cardinal-red text-cardinal-red animate-pulse" />
-                  </Link>
-                </motion.div>
-
-                {/* Decorative Pixel Pattern */}
-                <motion.div
-                  className="mt-8 flex justify-center"
-                  animate={{
-                    y: [0, -10, 0],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-retro-pink border-2 border-navy" />
-                    <Sparkles className="w-5 h-5 text-retro-plum" />
-                    <Heart className="w-5 h-5 text-cardinal-red fill-current" />
-                    <Sparkles className="w-5 h-5 text-retro-plum" />
-                    <div className="w-4 h-4 bg-retro-sky border-2 border-navy" />
-                  </div>
-                </motion.div>
               </div>
-            </motion.div>
-          </>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </>
   );
 }

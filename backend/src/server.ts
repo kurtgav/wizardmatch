@@ -1,52 +1,42 @@
 import app from './app';
 import { config } from './config/env.config';
 import { logger } from './utils/logger';
-import { initDatabase } from './config/db.config';
 
-// Start server
 const PORT = config.port;
 
-async function startServer() {
-  try {
-    // Initialize database connection
-    await initDatabase();
-    logger.info('Database connected successfully');
-
-    // Start listening
-    app.listen(PORT, () => {
-      logger.info(`🚀 Server running on port ${PORT}`);
-      logger.info(`📝 Environment: ${config.nodeEnv}`);
-      logger.info(`🌐 API URL: http://localhost:${PORT}${config.apiPrefix}`);
-      logger.info(`💕 Perfect Match Backend Ready!`);
-    });
-  } catch (error) {
-    logger.error('Failed to start server:', error);
-    process.exit(1);
-  }
-}
+const server = app.listen(PORT, '0.0.0.0', () => {
+  logger.info(`🚀 Server running on http://0.0.0.0:${PORT}`);
+  logger.info(`🌍 Environment: ${config.nodeEnv}`);
+  logger.info(`🪄 API Prefix: ${config.apiPrefix}`);
+  logger.info(`🔮 Health check: http://localhost:${PORT}/health`);
+});
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err: Error) => {
-  logger.error('Unhandled Rejection:', err);
-  process.exit(1);
+process.on('unhandledRejection', (reason: unknown) => {
+  logger.error('Unhandled Rejection at:', reason);
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (err: Error) => {
-  logger.error('Uncaught Exception:', err);
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception:', error.message);
   process.exit(1);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down gracefully...');
-  process.exit(0);
+  logger.info('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
 });
 
 process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down gracefully...');
-  process.exit(0);
+  logger.info('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+    process.exit(0);
+  });
 });
 
-// Start the server
-startServer();
+export default server;

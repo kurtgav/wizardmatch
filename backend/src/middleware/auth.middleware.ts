@@ -63,7 +63,11 @@ export async function authenticate(
 export function requireAdmin(req: Request, _res: Response, next: NextFunction): void {
   // For now, we'll check if the email is from the admin domain
   // In production, you should have a proper role-based system
-  const adminEmails = ['admin@mcl.edu.ph', 'perfectmatch@mcl.edu.ph'];
+  const adminEmails = ['kurtgavin.design@gmail.com', 'admin@wizardmatch.ai'];
+
+  if (config.adminEmail && !adminEmails.includes(config.adminEmail)) {
+    adminEmails.push(config.adminEmail);
+  }
 
   if (!req.user) {
     return next(createError('Authentication required', 401));

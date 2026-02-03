@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart, Mail, Instagram, Facebook, Github, Sparkles, Wand2, Ghost } from 'lucide-react';
+import { Heart, Mail, Instagram, Facebook, Github, Flower2, Flower, Wand2, Ghost } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const footerLinks = {
@@ -21,7 +21,7 @@ const footerLinks = {
 const socialLinks = [
   { href: 'https://instagram.com', icon: Instagram, label: 'Instagram' },
   { href: 'https://facebook.com', icon: Facebook, label: 'Facebook' },
-  { href: 'mailto:perfectmatch@mcl.edu.ph', icon: Mail, label: 'Email' },
+  { href: 'mailto:perfectmatch@gmail.com', icon: Mail, label: 'Email' },
 ];
 
 export default function Footer() {
@@ -99,16 +99,16 @@ export default function Footer() {
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="w-14 h-14 bg-retro-pink border-4 border-retro-yellow flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A]">
-                  <span className="font-pixel text-lg text-navy font-bold">MM</span>
+                <div className="w-14 h-14 bg-retro-pink border-4 border-retro-yellow flex items-center justify-center shadow-[4px_4px_0_0_#1E3A8A] p-2">
+                  <img src="/images/wizardmatch-logo.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="font-display font-bold text-xl text-white leading-tight">
-                    Perfect Match
+                    Wizard Match
                   </div>
                   <div className="flex items-center gap-1 text-xs text-retro-pink mt-1">
                     <Wand2 className="w-3 h-3" />
-                    <span className="font-pixel text-[10px]">By Mapúa MCL</span>
+                    <span className="font-pixel text-[10px]">By Wizards</span>
                   </div>
                 </div>
               </motion.div>
@@ -125,9 +125,9 @@ export default function Footer() {
               whileHover={{ y: -2, x: -2, boxShadow: '6px 6px 0 0 #1E3A8A' }}
               transition={{ duration: 0.2 }}
             >
-              <Sparkles className="w-4 h-4 text-retro-yellow" />
+              <Flower2 className="w-4 h-4 text-retro-yellow" />
               <span className="font-pixel text-xs text-white font-bold">
-                Love Witch Approved
+                Bloom With Love
               </span>
             </motion.div>
           </div>
@@ -137,7 +137,7 @@ export default function Footer() {
             {/* Platform Links */}
             <div>
               <h3 className="font-pixel text-sm text-retro-pink mb-4 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-retro-yellow" />
+                <Flower className="w-4 h-4 text-retro-yellow" />
                 PLATFORM
               </h3>
               <ul className="space-y-3">
@@ -217,10 +217,10 @@ export default function Footer() {
             >
               <p className="font-pixel text-xs text-navy/70 mb-1">EMAIL US AT</p>
               <a
-                href="mailto:perfectmatch@mcl.edu.ph"
+                href="mailto:perfectmatch@gmail.com"
                 className="font-pixel text-xs text-navy font-bold hover:text-cardinal-red transition-colors"
               >
-                perfectmatch@mcl.edu.ph
+                perfectmatch@gmail.com
               </a>
             </motion.div>
           </div>
@@ -239,7 +239,7 @@ export default function Footer() {
                 repeat: Infinity,
               }}
             >
-              © 2026 Mapúa MCL Perfect Match. All rights reserved.
+              © 2026 Wizard Match. All rights reserved.
             </motion.p>
 
             <motion.div
@@ -255,9 +255,9 @@ export default function Footer() {
               <p className="font-pixel text-xs text-white/60 flex items-center gap-1">
                 Made with{' '}
                 <Heart className="w-4 h-4 fill-retro-pink text-retro-pink animate-pulse" />{' '}
-                by Mapúa MCL Wizards
+                by Wizards
               </p>
-              <Sparkles className="w-4 h-4 text-retro-yellow" />
+              <Flower className="w-4 h-4 text-retro-yellow" />
             </motion.div>
           </div>
         </div>
@@ -277,11 +277,11 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             {/* Pixel Pattern */}
             <div className="w-4 h-4 bg-retro-pink border-2 border-retro-yellow" />
-            <Sparkles className="w-5 h-5 text-retro-plum" />
+            <Flower2 className="w-5 h-5 text-retro-plum" />
             <Heart className="w-5 h-5 text-retro-pink fill-current" />
             <Wand2 className="w-5 h-5 text-retro-yellow" />
             <Heart className="w-5 h-5 text-retro-pink fill-current" />
-            <Sparkles className="w-5 h-5 text-retro-plum" />
+            <Flower2 className="w-5 h-5 text-retro-plum" />
             <div className="w-4 h-4 bg-retro-sky border-2 border-retro-yellow" />
           </div>
         </motion.div>

@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 // Validation schemas
 const updateProfileSchema = z.object({
+  username: z.string().min(3).max(30).optional(),
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
   program: z.string().optional(),
@@ -13,6 +14,11 @@ const updateProfileSchema = z.object({
   bio: z.string().max(500).optional(),
   instagramHandle: z.string().optional(),
   facebookProfile: z.string().optional(),
+  socialMediaName: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  contactPreference: z.enum(['Instagram', 'Phone']).optional(),
+  profileVisibility: z.enum(['Public', 'Matches Only', 'Private']).optional(),
+  profilePhotoUrl: z.string().optional(),
 });
 
 const updatePreferencesSchema = z.object({
@@ -37,8 +43,13 @@ export const userController = {
         gender: true,
         bio: true,
         profilePhotoUrl: true,
+        username: true,
         instagramHandle: true,
         facebookProfile: true,
+        socialMediaName: true,
+        phoneNumber: true,
+        contactPreference: true,
+        profileVisibility: true,
         surveyCompleted: true,
         preferences: true,
         createdAt: true,
@@ -63,6 +74,7 @@ export const userController = {
       data: validatedData,
       select: {
         id: true,
+        username: true,
         firstName: true,
         lastName: true,
         program: true,
@@ -72,6 +84,10 @@ export const userController = {
         profilePhotoUrl: true,
         instagramHandle: true,
         facebookProfile: true,
+        socialMediaName: true,
+        phoneNumber: true,
+        contactPreference: true,
+        profileVisibility: true,
       },
     });
 

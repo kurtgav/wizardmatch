@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config/env.config';
 import { errorHandler } from './middleware/error.middleware';
-import { rateLimiter } from './middleware/rateLimiter.middleware';
 import { logger } from './utils/logger';
 
 // Import routes
@@ -44,7 +43,7 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: [config.frontendUrl, 'http://localhost:3000'],
+  origin: [config.frontendUrl, 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://0.0.0.0:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -62,9 +61,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
   next();
 });
-
-// Rate limiting
-app.use(`${config.apiPrefix}`, rateLimiter);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {

@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthState } from '@/hooks/useAuthState';
 import { api } from '@/lib/api';
 import ProgressBar from '@/components/survey/ProgressBar';
 import QuestionCard from '@/components/survey/QuestionCard';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flower2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
 interface Question {
   id: string;
   category: string;
   questionText: string;
   questionType: string;
-  options: string[] | null;
+  options: any;
   orderIndex: number;
 }
 
@@ -34,6 +36,9 @@ export default function SurveyPage() {
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  const answersRef = useRef<Record<string, any>>({});
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -46,21 +51,24 @@ export default function SurveyPage() {
       return;
     }
 
-    // Load questions immediately (no auth required)
     loadQuestions();
+  }, [user, authLoading, router]);
 
-    // Load progress and saved answers (requires auth)
+  useEffect(() => {
     if (user) {
       loadProgress();
     }
-  }, [user, authLoading, router]);
+  }, [user]);
 
   async function loadQuestions() {
     try {
+      console.log('Fetching questions...');
       const response = await api.getQuestions();
       if (response.success) {
         setQuestions(response.data);
-        setCategories(Object.keys(response.data));
+        const cats = Object.keys(response.data);
+        setCategories(cats);
+        console.log(`Loaded ${cats.length} categories.`);
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
@@ -80,53 +88,54 @@ export default function SurveyPage() {
         if (responsesResponse.success) {
           const savedAnswers: Record<string, any> = {};
           responsesResponse.data.forEach((r: any) => {
-            savedAnswers[r.questionId] =
-              r.answerValue !== null ? r.answerValue : r.answerText;
+            savedAnswers[r.questionId] = r.answerValue !== null ? r.answerValue : r.answerText;
           });
           setAnswers(savedAnswers);
+          answersRef.current = savedAnswers;
         }
       }
     } catch (error) {
       console.error('Failed to load progress:', error);
-      // Don't block the survey if progress fails to load
     }
   }
 
   async function handleAnswer(answer: any) {
     const currentCategory = categories[currentCategoryIndex];
+    if (!currentCategory) return;
+
     const currentQuestions = questions[currentCategory];
     const currentQuestion = currentQuestions[currentQuestionIndex];
+    if (!currentQuestion) return;
 
-    // Update local state immediately (optimistic update)
+    // Update local state immediately
     const newAnswers = { ...answers, [currentQuestion.id]: answer };
     setAnswers(newAnswers);
+    answersRef.current = newAnswers;
 
-    // Update progress (safe calculation)
+    // Update progress
     const allQuestions = Object.values(questions).flat();
     const totalQuestions = allQuestions.length;
     const answeredQuestions = Object.keys(newAnswers).length;
     const newProgress = totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
     setProgress(newProgress);
 
-    // Save to backend in background (don't block UI)
-    api.submitResponse({
-      questionId: currentQuestion.id,
-      answerText: typeof answer === 'string' ? answer : undefined,
-      answerValue: typeof answer === 'number' ? answer : undefined,
-      answerType: currentQuestion.questionType,
-    }).catch((error) => {
-      // Silent retry once if failed
-      setTimeout(() => {
-        api.submitResponse({
-          questionId: currentQuestion.id,
-          answerText: typeof answer === 'string' ? answer : undefined,
-          answerValue: typeof answer === 'number' ? answer : undefined,
-          answerType: currentQuestion.questionType,
-        }).catch((retryError) => {
-          console.error('Failed to save answer after retry:', retryError);
-        });
-      }, 1000);
-    });
+    // Save to database
+    setSaveStatus('saving');
+    try {
+      const submissionData = {
+        questionId: currentQuestion.id,
+        answerText: typeof answer === 'string' ? answer : undefined,
+        answerValue: typeof answer === 'number' ? answer : undefined,
+        answerType: currentQuestion.questionType as any,
+      };
+
+      await api.submitResponse(submissionData);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch (error) {
+      console.error('Failed to save answer:', error);
+      setSaveStatus('error');
+    }
   }
 
   async function handleNext() {
@@ -135,87 +144,84 @@ export default function SurveyPage() {
     const currentQuestion = currentQuestions[currentQuestionIndex];
     const currentAnswer = answers[currentQuestion.id];
 
-    // Check if current question is answered
-    if (!currentAnswer) {
+    if (currentAnswer === undefined || currentAnswer === null) {
+      return; // Shouldn't happen as button is disabled
+    }
+
+    const allQuestions = Object.values(questions).flat();
+    const totalQuestionsCount = allQuestions.length;
+
+    // Calculate current global index
+    let questionNumber = 0;
+    for (let i = 0; i < currentCategoryIndex; i++) {
+      questionNumber += questions[categories[i]].length;
+    }
+    questionNumber += currentQuestionIndex + 1;
+
+    // If it's the last question, complete.
+    if (questionNumber === totalQuestionsCount) {
+      setSubmitting(true);
+      try {
+        console.log('Finishing survey...');
+        // Final save just in case
+        await handleAnswer(currentAnswer);
+
+        const res = await api.completeSurvey() as { success: boolean, message?: string };
+        if (res.success) {
+          router.push('/survey/complete');
+        } else {
+          throw new Error(res.message || 'Completion failed');
+        }
+      } catch (error: any) {
+        console.error('Survey completion error:', error);
+        alert(error.message || 'Something went wrong. Please check your internet and try again.');
+        setSubmitting(false);
+      }
       return;
     }
 
-    // Small delay to ensure save initiated
-    await new Promise(resolve => setTimeout(resolve, 200));
-
+    // Go to next question
     if (currentQuestionIndex < currentQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else if (currentCategoryIndex < categories.length - 1) {
+    } else {
       setCurrentCategoryIndex(currentCategoryIndex + 1);
       setCurrentQuestionIndex(0);
-    } else {
-      // Last question - complete survey
-      await handleComplete();
     }
+
+    // Jump to top of page on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function handlePrevious() {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     } else if (currentCategoryIndex > 0) {
-      setCurrentCategoryIndex(currentCategoryIndex - 1);
-      setCurrentQuestionIndex(questions[categories[currentCategoryIndex - 1]].length - 1);
+      const prevCatIndex = currentCategoryIndex - 1;
+      const prevCatQuestions = questions[categories[prevCatIndex]];
+      setCurrentCategoryIndex(prevCatIndex);
+      setCurrentQuestionIndex(prevCatQuestions.length - 1);
     }
-  }
-
-  async function handleComplete() {
-    setSubmitting(true);
-    try {
-      // Debug: log current state
-      const allQuestions = Object.values(questions).flat();
-      const totalQuestions = allQuestions.length;
-      const answeredQuestions = Object.keys(answers).length;
-      console.log(`Attempting to complete survey: ${answeredQuestions}/${totalQuestions} answered`);
-
-      const response = await api.completeSurvey() as { success: boolean; message?: string };
-      console.log('Complete survey response:', response);
-
-      if (response.success) {
-        router.push('/matches');
-      } else {
-        console.error('Survey completion failed:', response);
-        alert(response.message || 'Failed to complete survey. Please try again.');
-        setSubmitting(false);
-      }
-    } catch (error: any) {
-      console.error('Failed to complete survey:', error);
-
-      // Check if it's because not all questions are answered
-      const allQuestions = Object.values(questions).flat();
-      const totalQuestions = allQuestions.length;
-      const answeredQuestions = Object.keys(answers).length;
-
-      console.log(`Questions answered: ${answeredQuestions}/${totalQuestions}`);
-
-      if (answeredQuestions < totalQuestions) {
-        alert(`Please answer all questions first. (${totalQuestions - answeredQuestions} remaining)`);
-      } else {
-        alert('Failed to complete survey. Please try again.');
-      }
-      setSubmitting(false);
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-pink-light">
-        <div className="w-16 h-16 border-4 border-cardinal-red border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex flex-col bg-retro-cream">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-12 h-12 text-navy animate-spin" />
+        </div>
       </div>
     );
   }
 
-  // Check if questions are loaded and valid
-  if (!categories || categories.length === 0 || Object.keys(questions).length === 0) {
+  if (categories.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-retro-cream">
-        <div className="text-center">
-          <p className="font-pixel text-sm text-navy mb-4">Loading survey questions...</p>
-          <div className="w-16 h-16 border-4 border-retro-sky border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <div className="min-h-screen flex flex-col bg-retro-cream">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+          <p className="font-pixel text-lg text-navy mb-4">WIZARDS ARE PREPARING THE QUESTIONS...</p>
+          <Loader2 className="w-8 h-8 text-retro-pink animate-spin" />
         </div>
       </div>
     );
@@ -223,137 +229,118 @@ export default function SurveyPage() {
 
   const currentCategory = categories[currentCategoryIndex];
   const currentQuestions = questions[currentCategory];
+  const currentQuestion = currentQuestions ? currentQuestions[currentQuestionIndex] : null;
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : null;
 
-  // Additional safety check
-  if (!currentCategory || !currentQuestions || currentQuestions.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-retro-cream">
-        <div className="text-center">
-          <p className="font-pixel text-sm text-navy mb-4">No survey questions available.</p>
-          <p className="font-body text-base text-navy/70">Please contact an administrator.</p>
-        </div>
-      </div>
-    );
+  if (!currentQuestion) {
+    return <div>Error loading question.</div>;
   }
 
-  const currentQuestion = currentQuestions[currentQuestionIndex];
-  const currentAnswer = answers[currentQuestion.id];
-
-  // Calculate actual question number (not based on answered count)
-  let questionsBeforeCurrent = 0;
+  let overallQuestionNumber = 0;
   for (let i = 0; i < currentCategoryIndex; i++) {
-    questionsBeforeCurrent += questions[categories[i]].length;
+    overallQuestionNumber += questions[categories[i]].length;
   }
-  const overallQuestionNumber = questionsBeforeCurrent + currentQuestionIndex + 1;
+  overallQuestionNumber += currentQuestionIndex + 1;
   const totalQuestions = Object.values(questions).flat().length;
-  const answeredCount = Object.keys(answers).length;
 
   return (
-    <div className="min-h-screen bg-retro-cream py-24">
-      {/* Pixel Grid Background */}
-      <div className="fixed inset-0 opacity-5 pointer-events-none">
-        <div className="w-full h-full" style={{
-          backgroundImage: `
-            linear-gradient(#1E3A8A 1px, transparent 1px),
-            linear-gradient(90deg, #1E3A8A 1px, transparent 1px)
-          `,
-          backgroundSize: '8px 8px'
-        }}></div>
-      </div>
+    <div className="min-h-screen bg-retro-cream">
+      <Header />
 
-      <div className="container mx-auto px-4 max-w-4xl relative z-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <h1 className="font-pixel text-xl md:text-2xl text-cardinal-red mb-2">
-            COMPATIBILITY SURVEY
-          </h1>
-          <p className="font-body text-base text-navy">
-            QUESTION {overallQuestionNumber} OF {totalQuestions}
-          </p>
-        </motion.div>
+      <main className="pt-24 md:pt-32 pb-12">
+        <div className="container mx-auto px-4 max-w-2xl relative z-10">
 
-        {/* Progress Bar */}
-        <ProgressBar progress={progress} />
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-navy p-6 border-4 border-navy shadow-[8px_8px_0_0_#E52037] mb-8 text-center"
+          >
+            <h1 className="font-display font-black text-2xl md:text-3xl text-white uppercase tracking-tight">
+              Compatibility Chamber
+            </h1>
+            <div className="mt-2 flex items-center justify-center gap-4">
+              <div className="h-[2px] w-8 bg-retro-yellow" />
+              <span className="font-pixel text-[10px] text-retro-yellow uppercase">Question {overallQuestionNumber} of {totalQuestions}</span>
+              <div className="h-[2px] w-8 bg-retro-yellow" />
+            </div>
+          </motion.div>
 
-        {/* Category Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center mb-6"
-        >
-          <div className="inline-block relative">
-            <div className="absolute inset-0 bg-retro-pink transform translate-x-1 translate-y-1"></div>
-            <div className="relative bg-retro-sky border-4 border-navy px-6 py-2 transform -translate-x-0.5 -translate-y-0.5">
-              <span className="font-pixel text-xs text-navy">
-                {currentCategory}
-              </span>
+          <ProgressBar progress={progress} />
+
+          {/* Category Hub */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-white border-4 border-navy px-4 py-1 flex items-center gap-2 shadow-[4px_4px_0_0_#1E3A8A]">
+              <Flower2 className="w-3 h-3 text-retro-plum" />
+              <span className="font-pixel text-[10px] uppercase text-navy">{currentCategory}</span>
+              <Flower2 className="w-3 h-3 text-retro-plum" />
             </div>
           </div>
-        </motion.div>
 
-        {/* Question Card */}
-        <AnimatePresence mode="wait">
-          <QuestionCard
-            key={currentQuestion.id}
-            question={currentQuestion}
-            answer={currentAnswer}
-            onAnswer={handleAnswer}
-          />
-        </AnimatePresence>
+          {/* Question Stage */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQuestion.id}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -20, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <QuestionCard
+                question={currentQuestion}
+                answer={currentAnswer}
+                onAnswer={handleAnswer}
+              />
+            </motion.div>
+          </AnimatePresence>
 
-        {/* Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex justify-between items-center mt-8"
-        >
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handlePrevious}
-            disabled={currentCategoryIndex === 0 && currentQuestionIndex === 0}
-            className="gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            PREVIOUS
-          </Button>
+          {/* Navigation Controls */}
+          <div className="mt-10 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentCategoryIndex === 0 && currentQuestionIndex === 0 || submitting}
+              className="w-full md:w-auto font-pixel text-xs border-4 border-navy h-14 px-8 shadow-[4px_4px_0_0_#1E3A8A] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              BACK
+            </Button>
 
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleNext}
-            disabled={!currentAnswer || submitting}
-            className="gap-2"
-          >
-            {submitting ? (
-              'SAVING...'
-            ) : overallQuestionNumber === totalQuestions ? (
-              <>
-                SAVE
-                <Sparkles className="w-4 h-4" />
-              </>
-            ) : (
-              <>
-                NEXT
-                <ChevronRight className="w-4 h-4" />
-              </>
-            )}
-          </Button>
-        </motion.div>
+            <div className="hidden md:block flex-1 flex justify-center">
+              {saveStatus === 'saving' && <span className="font-pixel text-[8px] text-navy/40 animate-pulse">PLANTING SEEDS...</span>}
+              {saveStatus === 'saved' && <span className="font-pixel text-[8px] text-retro-mint">GARDEN SYNCED!</span>}
+              {saveStatus === 'error' && <span className="font-pixel text-[8px] text-cardinal-red">SYNC FAILED!</span>}
+            </div>
 
-        {/* Save Message */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="font-pixel text-xs text-navy/60 text-center mt-6"
-        >
-          PROGRESS SAVED AUTOMATICALLY
-        </motion.p>
-      </div>
+            <Button
+              onClick={handleNext}
+              disabled={!currentAnswer || submitting}
+              className={`w-full md:w-auto font-pixel text-xs text-navy border-4 border-navy h-14 px-10 shadow-[6px_6px_0_0_#1E3A8A] active:shadow-none active:translate-x-1.5 active:translate-y-1.5 transition-all ${overallQuestionNumber === totalQuestions ? 'bg-retro-yellow' : 'bg-retro-sky'
+                }`}
+            >
+              {submitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  FINISHING...
+                </div>
+              ) : overallQuestionNumber === totalQuestions ? (
+                <div className="flex items-center gap-2">
+                  COMPLETE <Flower2 className="w-4 h-4" />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  NEXT <ChevronRight className="w-4 h-4" />
+                </div>
+              )}
+            </Button>
+          </div>
+
+          <p className="mt-8 text-center font-pixel text-[9px] text-navy/30 uppercase tracking-[0.2em]">
+            Progress is automatically locked into the crystal ball
+          </p>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }

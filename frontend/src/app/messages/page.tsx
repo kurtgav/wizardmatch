@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useAuthState } from '@/hooks/useAuthState';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import { MessageThread, ConversationListItem } from '@/components/messaging/MessageThread';
 import { getActiveCampaign, getConversations, getMessages, sendMessage, markMessagesAsRead, getUnreadCount } from '@/lib/api-campaign';
+import { MessageCircle, Lock, Clock, Heart } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default function MessagesPage() {
-  const sessionResult = useSession();
+  const { user, loading: authLoading } = useAuthState();
   const router = useRouter();
   const [campaign, setCampaign] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
@@ -17,29 +20,40 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  // Handle build-time undefined session
-  if (!sessionResult) {
-    return null;
-  }
-
-  const { data: session, status } = sessionResult;
+  const [messagingLocked, setMessagingLocked] = useState(false);
+  const [lockReason, setLockReason] = useState('');
 
   // Load campaign and conversations
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+      return;
+    }
+
     const loadData = async () => {
       try {
         const campaignRes = await getActiveCampaign();
         if (!campaignRes.success || !campaignRes.data) {
-          setError('No active campaign found');
+          setMessagingLocked(true);
+          setLockReason('No active campaign found');
           return;
         }
 
+        const isAdmin = user?.email === 'kurtgavin.design@gmail.com';
         const phase = campaignRes.data.phase;
-        // Only allow messaging during profile_update or results_released
-        if (phase !== 'profile_update' && phase !== 'results_released') {
-          setError('Messaging is not available yet. It will be unlocked during the profile update period (Feb 11-13).');
+
+        // Only allow messaging during profile_update or results_released (unless admin)
+        if (phase !== 'profile_update' && phase !== 'results_released' && !isAdmin) {
+          setMessagingLocked(true);
+          const phaseMessages: Record<string, string> = {
+            pre_launch: 'Messaging opens when the matching period begins',
+            survey_open: 'Complete your survey first! Messaging opens during the profile update period (February 11-13)',
+            survey_closed: 'Matching is in progress. Messaging opens soon!',
+            profile_update: 'Messaging available',
+            results_released: 'Messaging available',
+          };
+          setLockReason(phaseMessages[phase] || 'Messaging is not available yet');
           return;
         }
 
@@ -58,16 +72,16 @@ export default function MessagesPage() {
           setUnreadCount(unreadRes.data.unreadCount);
         }
       } catch (err: any) {
-        setError(err.message || 'Failed to load data');
+        console.error('Failed to load data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (status === 'authenticated') {
+    if (user) {
       loadData();
     }
-  }, [status]);
+  }, [user, authLoading, router]);
 
   // Load messages when conversation is selected
   useEffect(() => {
@@ -87,100 +101,154 @@ export default function MessagesPage() {
     loadMessages();
   }, [selectedConversation]);
 
-  if (status === 'loading' || loading) {
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-xl font-semibold text-red-800 mb-2">Messaging Unavailable</h2>
-          <p className="text-red-600">{error}</p>
+      <div className="min-h-screen flex flex-col bg-retro-cream">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-16 h-16 border-4 border-cardinal-red border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Messages 💬</h1>
-              <p className="text-sm text-gray-500">
+    <div className="min-h-screen bg-retro-cream">
+      <Header />
+
+      <main className="max-w-7xl mx-auto p-4 pt-32 pb-12">
+        {/* Locked state */}
+        {messagingLocked ? (
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white border-8 border-navy p-12 shadow-[12px_12px_0_0_#1E3A8A] text-center relative overflow-hidden">
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-5 pointer-events-none">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `
+                    linear-gradient(to right, #1E3A8A 2px, transparent 2px),
+                    linear-gradient(to bottom, #1E3A8A 2px, transparent 2px)
+                  `,
+                  backgroundSize: '16px 16px',
+                }} />
+              </div>
+
+              {/* Lock icon */}
+              <div className="flex justify-center mb-6">
+                <div className="bg-retro-pink border-4 border-navy p-6 shadow-[6px_6px_0_0_#1E3A8A]">
+                  <Lock className="w-12 h-12 text-navy" />
+                </div>
+              </div>
+
+              <h1 className="font-pixel text-2xl text-navy mb-4">Messaging Locked 🔒</h1>
+              <p className="font-body text-lg text-navy/80 mb-6">{lockReason}</p>
+
+              {/* Timeline */}
+              <div className="bg-retro-cream border-4 border-navy p-6 mb-6">
+                <h3 className="font-pixel text-sm text-navy mb-4 flex items-center justify-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  MESSAGING TIMELINE
+                </h3>
+                <div className="space-y-3 text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-retro-lavender border-2 border-navy flex items-center justify-center flex-shrink-0">
+                      <span className="font-pixel text-xs text-navy">1</span>
+                    </div>
+                    <p className="font-body text-sm text-navy">Complete your survey (Feb 5-10)</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-retro-mint border-2 border-navy flex items-center justify-center flex-shrink-0">
+                      <span className="font-pixel text-xs text-navy">2</span>
+                    </div>
+                    <p className="font-body text-sm text-navy">Wait for matching results</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-retro-yellow border-2 border-navy flex items-center justify-center flex-shrink-0">
+                      <span className="font-pixel text-xs text-navy">3</span>
+                    </div>
+                    <p className="font-body text-sm text-navy font-bold">Chat with your matches! (Feb 11+)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <a href="/survey" className="inline-flex items-center gap-2 bg-retro-pink text-navy px-6 py-3 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all">
+                  <Heart className="w-4 h-4" />
+                  TAKE SURVEY
+                </a>
+                <a href="/matches" className="inline-flex items-center gap-2 bg-white text-navy px-6 py-3 border-4 border-navy font-pixel text-xs shadow-[6px_6px_0_0_#1E3A8A] hover:shadow-[3px_3px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all">
+                  <MessageCircle className="w-4 h-4" />
+                  VIEW MATCHES
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Messaging Layout */}
+            <div className="flex flex-col mb-8">
+              <h1 className="font-pixel text-2xl text-navy mb-2 uppercase">Messages 💬</h1>
+              <p className="font-body text-sm text-navy/70">
                 {unreadCount > 0 && `${unreadCount} unread message${unreadCount > 1 ? 's' : ''}`}
               </p>
             </div>
-            <div className="text-sm text-gray-500">
-              {campaign?.phase === 'profile_update' ? 'Profile Update Period' : 'Valentine\'s Day'}
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Conversations list */}
-          <div className="md:col-span-1">
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="p-4 border-b">
-                <h2 className="font-semibold">Your Conversations</h2>
-                <p className="text-sm text-gray-500">{conversations.length} match{conversations.length !== 1 ? 'es' : ''}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Conversations list */}
+              <div className="md:col-span-1">
+                <div className="bg-white border-4 border-navy shadow-[6px_6px_0_0_#1E3A8A] overflow-hidden">
+                  <div className="p-4 border-b-4 border-navy bg-retro-lavender">
+                    <h2 className="font-pixel text-sm text-navy">Your Conversations</h2>
+                    <p className="font-body text-xs text-navy/70">{conversations.length} match{conversations.length !== 1 ? 'es' : ''}</p>
+                  </div>
+                  <div className="divide-y-2 divide-navy max-h-[500px] overflow-y-auto">
+                    {conversations.map((conv) => (
+                      <ConversationListItem
+                        key={conv.matchId}
+                        conversation={conv}
+                        isActive={selectedConversation?.matchId === conv.matchId}
+                        onClick={() => setSelectedConversation(conv)}
+                      />
+                    ))}
+                    {conversations.length === 0 && (
+                      <div className="p-8 text-center text-navy/50">
+                        <p className="font-body">No conversations yet</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="divide-y max-h-[500px] overflow-y-auto">
-                {conversations.map((conv) => (
-                  <ConversationListItem
-                    key={conv.matchId}
-                    conversation={conv}
-                    isActive={selectedConversation?.matchId === conv.matchId}
-                    onClick={() => setSelectedConversation(conv)}
+
+              {/* Message thread */}
+              <div className="md:col-span-2">
+                {selectedConversation ? (
+                  <MessageThread
+                    matchId={selectedConversation.matchId}
+                    currentUserId={user?.email || ''}
+                    messages={messages}
+                    onSendMessage={async (content) => {
+                      await sendMessage(selectedConversation.matchId, content);
+                      // Reload messages
+                      const msgRes = await getMessages(selectedConversation.matchId);
+                      if (msgRes.success) {
+                        setMessages(msgRes.data);
+                      }
+                    }}
+                    onMarkAsRead={async (messageIds) => {
+                      await markMessagesAsRead(messageIds);
+                      setUnreadCount(0);
+                    }}
                   />
-                ))}
-                {conversations.length === 0 && (
-                  <div className="p-8 text-center text-gray-400">
-                    <p>No conversations yet</p>
+                ) : (
+                  <div className="bg-white border-4 border-navy shadow-[6px_6px_0_0_#1E3A8A] p-8 text-center">
+                    <p className="font-body text-navy/50">Select a conversation to start messaging</p>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Message thread */}
-          <div className="md:col-span-2">
-            {selectedConversation ? (
-              <MessageThread
-                matchId={selectedConversation.matchId}
-                currentUserId={session?.user?.email || ''}
-                messages={messages}
-                onSendMessage={async (content) => {
-                  await sendMessage(selectedConversation.matchId, content);
-                  // Reload messages
-                  const msgRes = await getMessages(selectedConversation.matchId);
-                  if (msgRes.success) {
-                    setMessages(msgRes.data);
-                  }
-                }}
-                onMarkAsRead={async (messageIds) => {
-                  await markMessagesAsRead(messageIds);
-                  setUnreadCount(0);
-                }}
-              />
-            ) : (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <p className="text-gray-400">Select a conversation to start messaging</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      </main>
+      <Footer />
     </div>
   );
 }

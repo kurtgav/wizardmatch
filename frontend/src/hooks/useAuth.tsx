@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
 interface User {
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     checkAuth();
@@ -35,25 +37,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function checkAuth() {
     try {
+      // Check if we have a token in localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       const response = await api.getSession();
       if (response.success && response.data) {
         setUser(response.data);
+      } else {
+        // Invalid token, clear it
+        localStorage.removeItem('token');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // Clear invalid token
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
   }
 
   function login(token: string) {
-    api.setToken(token);
+    // Store token and refresh session
+    localStorage.setItem('token', token);
     checkAuth();
   }
 
   function logout() {
-    api.clearToken();
+    // Clear token and user state
+    localStorage.removeItem('token');
     setUser(null);
+    router.push('/auth/login');
   }
 
   function updateUser(updatedUser: User) {

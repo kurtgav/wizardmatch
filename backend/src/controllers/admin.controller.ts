@@ -19,7 +19,37 @@ const updateSettingsSchema = z.object({
   value: z.any(),
 });
 
+const createManualMatchSchema = z.object({
+  user1Id: z.string().uuid(),
+  user2Id: z.string().uuid(),
+  compatibilityScore: z.number().min(0).max(100).optional(),
+});
+
 export const adminController = {
+  getPublicStats: asyncHandler(async (req: Request, res: Response) => {
+    const [
+      totalUsers,
+      completedSurveys,
+      totalMatches,
+      matchReleaseSetting,
+    ] = await Promise.all([
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { isActive: true, surveyCompleted: true } }),
+      prisma.match.count(),
+      prisma.adminSetting.findUnique({ where: { settingKey: 'matchReleaseDate' } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        completedSurveys,
+        totalMatches,
+        matchReleaseDate: matchReleaseSetting?.settingValue || new Date('2026-02-14T00:00:00Z'),
+      },
+    });
+  }),
+
   getStats: asyncHandler(async (req: Request, res: Response) => {
     const [
       totalUsers,
@@ -53,13 +83,13 @@ export const adminController = {
 
     const where = search
       ? {
-          OR: [
-            { firstName: { contains: String(search), mode: 'insensitive' as const } },
-            { lastName: { contains: String(search), mode: 'insensitive' as const } },
-            { email: { contains: String(search), mode: 'insensitive' as const } },
-            { studentId: { contains: String(search), mode: 'insensitive' as const } },
-          ],
-        }
+        OR: [
+          { firstName: { contains: String(search), mode: 'insensitive' as const } },
+          { lastName: { contains: String(search), mode: 'insensitive' as const } },
+          { email: { contains: String(search), mode: 'insensitive' as const } },
+          { studentId: { contains: String(search), mode: 'insensitive' as const } },
+        ],
+      }
       : {};
 
     const [users, total] = await Promise.all([
@@ -272,6 +302,31 @@ export const adminController = {
     });
   }),
 
+  createTestimonial: asyncHandler(async (req: Request, res: Response) => {
+    const { authorName, program, title, content } = req.body;
+
+    if (!authorName || !content) {
+      throw createError('Author name and content are required', 400);
+    }
+
+    const testimonial = await prisma.testimonial.create({
+      data: {
+        name: authorName || 'Anonymous',
+        email: program || null,
+        heading: title || 'Success Story',
+        content,
+        isApproved: false,
+        isPublished: false,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: testimonial,
+      message: 'Testimonial submitted successfully! It will be reviewed before being published.',
+    });
+  }),
+
   approveTestimonial: asyncHandler(async (req: Request, res: Response) => {
     const { testimonialId } = req.params;
     const { isApproved, isPublished } = req.body;
@@ -285,6 +340,113 @@ export const adminController = {
       success: true,
       data: testimonial,
       message: 'Testimonial updated successfully',
+    });
+  }),
+
+  getEligibleUsers: asyncHandler(async (req: Request, res: Response) => {
+    // Users who completed the survey
+    const users = await prisma.user.findMany({
+      where: {
+        surveyCompleted: true,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        program: true,
+        gender: true,
+        seekingGender: true,
+      },
+      orderBy: { firstName: 'asc' },
+    });
+
+    res.json({
+      success: true,
+      data: users,
+    });
+  }),
+
+  createManualMatch: asyncHandler(async (req: Request, res: Response) => {
+    const { user1Id, user2Id, compatibilityScore = 100 } = createManualMatchSchema.parse(req.body);
+
+    if (user1Id === user2Id) {
+      throw createError('Cannot match a user with themselves', 400);
+    }
+
+    // Get active campaign
+    const campaign = await prisma.campaign.findFirst({
+      where: { isActive: true },
+    });
+
+    // Check if both users exist and completed survey
+    const [u1, u2] = await Promise.all([
+      prisma.user.findUnique({ where: { id: user1Id } }),
+      prisma.user.findUnique({ where: { id: user2Id } }),
+    ]);
+
+    if (!u1 || !u2) {
+      throw createError('One or both users not found', 404);
+    }
+
+    // Check for existing match
+    const existingMatch = await prisma.match.findFirst({
+      where: {
+        OR: [
+          { user1Id, user2Id },
+          { user1Id: user2Id, user2Id: user1Id },
+        ],
+      },
+    });
+
+    if (existingMatch) {
+      // Update existing match
+      const updatedMatch = await prisma.match.update({
+        where: { id: existingMatch.id },
+        data: {
+          compatibilityScore,
+          matchTier: 'perfect',
+          isRevealed: false,
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: updatedMatch,
+        message: 'Match updated successfully',
+      });
+    }
+
+    // Create new match
+    const match = await prisma.match.create({
+      data: {
+        user1Id,
+        user2Id,
+        campaignId: campaign?.id,
+        compatibilityScore,
+        matchTier: 'perfect',
+        isRevealed: false,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: match,
+      message: 'Match created successfully',
+    });
+  }),
+
+  deleteMatch: asyncHandler(async (req: Request, res: Response) => {
+    const { matchId } = req.params;
+
+    await prisma.match.delete({
+      where: { id: matchId },
+    });
+
+    res.json({
+      success: true,
+      message: 'Match deleted successfully',
     });
   }),
 };
