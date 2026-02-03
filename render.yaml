@@ -1,0 +1,47 @@
+services:
+  # ------------------------------------
+  # 🟢 BACKEND (Express API)
+  # ------------------------------------
+  - type: web
+    name: wizardmatch-api
+    runtime: docker
+    rootDir: backend
+    plan: free
+    region: singapore # Optional: chose a region or let Render decide
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wizardmatch-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: wizardmatch-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NEXTAUTH_SECRET  
+        generateValue: true
+      # You need to manually add these after deployment or via the setup screen:
+      # - GOOGLE_CLIENT_ID
+      # - GOOGLE_CLIENT_SECRET
+      # - NEXT_PUBLIC_APP_URL
+
+databases:
+  # ------------------------------------
+  # 🗄️ POSTGRESQL API
+  # ------------------------------------
+  - name: wizardmatch-db
+    plan: free
+    databaseName: perfect_match
+    user: wizard_user
+
+  # ------------------------------------
+  # 🧠 REDIS (For Queues)
+  # ------------------------------------
+  # Note: Render Redis Free tier is not persistent and meant for cache. 
+  # For production queues, paid plan is recommended.
+  - name: wizardmatch-redis
+    plan: free
