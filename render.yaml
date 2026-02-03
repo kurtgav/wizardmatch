@@ -7,7 +7,7 @@ services:
     runtime: docker
     rootDir: backend
     plan: free
-    region: singapore # Optional: chose a region or let Render decide
+    region: singapore # Optional
     envVars:
       - key: NODE_ENV
         value: production
@@ -24,10 +24,15 @@ services:
         generateValue: true
       - key: NEXTAUTH_SECRET  
         generateValue: true
-      # You need to manually add these after deployment or via the setup screen:
-      # - GOOGLE_CLIENT_ID
-      # - GOOGLE_CLIENT_SECRET
-      # - NEXT_PUBLIC_APP_URL
+
+  # ------------------------------------
+  # 🧠 REDIS (For Queues)
+  # ------------------------------------
+  - type: redis
+    name: wizardmatch-redis
+    plan: free
+    region: singapore # Co-locate with web service
+    ipAllowList: [] # Access from internal services only by default
 
 databases:
   # ------------------------------------
@@ -35,13 +40,6 @@ databases:
   # ------------------------------------
   - name: wizardmatch-db
     plan: free
+    region: singapore # Co-locate
     databaseName: perfect_match
     user: wizard_user
-
-  # ------------------------------------
-  # 🧠 REDIS (For Queues)
-  # ------------------------------------
-  # Note: Render Redis Free tier is not persistent and meant for cache. 
-  # For production queues, paid plan is recommended.
-  - name: wizardmatch-redis
-    plan: free
