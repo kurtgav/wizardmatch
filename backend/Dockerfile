@@ -6,8 +6,8 @@ WORKDIR /app
 FROM base AS deps
 COPY package*.json ./
 COPY prisma ./prisma/
-RUN npm ci --only=production
-RUN npm install prisma --save-dev
+RUN npm install --omit=dev
+RUN npm install prisma
 
 # Build stage
 FROM base AS builder
