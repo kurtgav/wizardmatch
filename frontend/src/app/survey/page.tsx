@@ -132,7 +132,7 @@ export default function SurveyPage() {
       await api.submitResponse(submissionData);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save answer:', error);
       setSaveStatus('error');
     }
@@ -309,7 +309,7 @@ export default function SurveyPage() {
             <div className="hidden md:block flex-1 flex justify-center">
               {saveStatus === 'saving' && <span className="font-pixel text-[8px] text-navy/40 animate-pulse">PLANTING SEEDS...</span>}
               {saveStatus === 'saved' && <span className="font-pixel text-[8px] text-retro-mint">GARDEN SYNCED!</span>}
-              {saveStatus === 'error' && <span className="font-pixel text-[8px] text-cardinal-red">SYNC FAILED!</span>}
+              {saveStatus === 'error' && <span className="font-pixel text-[8px] text-cardinal-red" title="Check console for details">SYNC FAILED! RETRYING...</span>}
             </div>
 
             <Button

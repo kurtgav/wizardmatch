@@ -1,7 +1,8 @@
 // Campaign API client functions
 // Note: Authentication is handled via JWT token in localStorage
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 // Helper function to get auth token
 function getAuthToken(): string | null {

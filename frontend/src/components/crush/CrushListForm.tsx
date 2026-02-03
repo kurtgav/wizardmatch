@@ -24,7 +24,13 @@ export function CrushListForm({
   maxCrushes = 10,
   className = '',
 }: CrushListFormProps) {
-  const [crushes, setCrushes] = useState<Crush[]>(existingCrushes);
+  const [crushes, setCrushes] = useState<Crush[]>(
+    existingCrushes.map((c: any) => ({
+      ...c,
+      email: c.email || c.crushEmail || '',
+      name: c.name || c.crushName,
+    }))
+  );
   const [newCrushEmail, setNewCrushEmail] = useState('');
   const [newCrushName, setNewCrushName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
