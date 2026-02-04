@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Settings,
   Shield,
+  Gift,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -280,6 +281,25 @@ export default function AdminDashboardPage() {
             </div>
             <p className="font-body text-sm text-navy/80 border-t-2 border-navy/10 pt-4 mt-2">
               Review, approve, and publish user submitted success stories and testimonials.
+            </p>
+          </Link>
+
+          <Link href="/admin/crush-lists" className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A] hover:bg-retro-cream hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#1E3A8A] transition-all text-left block">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 bg-retro-orange border-2 border-navy flex items-center justify-center">
+                <Gift className="w-7 h-7 text-navy" />
+              </div>
+              <div>
+                <h3 className="font-pixel text-lg text-navy font-bold">
+                  CRUSH LISTS
+                </h3>
+                <p className="font-body text-xs text-navy/60">
+                  View submissions
+                </p>
+              </div>
+            </div>
+            <p className="font-body text-sm text-navy/80 border-t-2 border-navy/10 pt-4 mt-2">
+              View all user submitted crush lists and check match statuses.
             </p>
           </Link>
         </motion.div>

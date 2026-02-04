@@ -226,3 +226,19 @@ func GetAllMatches(c *gin.Context) {
 		"data":    matches,
 	})
 }
+
+func GetAllCrushLists(c *gin.Context) {
+	var crushLists []models.CrushList
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100"))
+
+	// Preload User info
+	if err := database.DB.Preload("User").Preload("Campaign").Limit(limit).Order("created_at desc").Find(&crushLists).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to fetch crush lists"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    crushLists,
+	})
+}

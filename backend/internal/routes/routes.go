@@ -79,7 +79,7 @@ func SetupRouter() *gin.Engine {
 			crushGroup := authRequired.Group("/crush-list")
 			{
 				crushGroup.GET("/", crush.GetCrushList)
-				crushGroup.POST("/", crush.AddCrush)
+				crushGroup.POST("/", crush.SubmitCrushList)
 			}
 
 			// Messages
@@ -110,6 +110,7 @@ func SetupRouter() *gin.Engine {
 			adminGroup.GET("/matches", admin.GetAllMatches)
 			adminGroup.POST("/generate-matches", admin.GenerateMatches)
 			adminGroup.POST("/manual-match", admin.CreateManualMatch)
+			adminGroup.GET("/crush-lists", admin.GetAllCrushLists)
 		}
 	}
 
