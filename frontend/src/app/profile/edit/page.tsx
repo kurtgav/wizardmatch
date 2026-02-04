@@ -58,6 +58,8 @@ export default function ProfileEditPage() {
               profileVisibility: profileData.profileVisibility || 'Matches Only',
               gender: profileData.gender || '',
               seekingGender: profileData.seekingGender || '',
+              firstName: profileData.firstName || '',
+              lastName: profileData.lastName || '',
             });
           }
         }

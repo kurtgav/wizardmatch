@@ -48,7 +48,7 @@ export function useAuthState() {
       : null,
     fetcher,
     {
-      revalidateOnFocus: false, // Reduce unnecessary fetches
+      revalidateOnFocus: true, // Enable revalidation
       shouldRetryOnError: false,
     }
   );

@@ -26,6 +26,7 @@ import {
 interface UserProfile {
     id: string;
     email: string;
+    username?: string;
     firstName: string;
     lastName: string;
     studentId: string;
@@ -55,7 +56,7 @@ export default function AdminUsersPage() {
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [selectedForMatch, setSelectedForMatch] = useState<UserProfile[]>([]);
 
-    const ADMIN_EMAILS = ['kurtgavin.design@gmail.com', 'admin@wizardmatch.ai'];
+    const ADMIN_EMAILS = ['kurtgavin.design@gmail.com', 'nicolemaaba@gmail.com', 'Agpfrancisco1@gmail.com'];
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -279,7 +280,14 @@ export default function AdminUsersPage() {
                                             </div>
                                             <div className="min-w-0">
                                                 <h3 className="font-display font-bold text-navy truncate">
-                                                    {user.firstName} {user.lastName}
+                                                    {user.username ? (
+                                                        <span className="flex flex-col">
+                                                            <span>{user.username}</span>
+                                                            <span className="text-[10px] opacity-60 font-body font-normal">{user.firstName} {user.lastName}</span>
+                                                        </span>
+                                                    ) : (
+                                                        `${user.firstName} ${user.lastName}`
+                                                    )}
                                                 </h3>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-pixel text-[10px] text-navy/60 bg-navy/5 px-1 rounded">

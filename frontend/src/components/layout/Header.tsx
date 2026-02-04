@@ -32,8 +32,23 @@ export default function Header() {
   // For desktop, show public links + private links if logged in
   const desktopLinks = allLinks.filter(link => link.public || (user && !link.public));
 
-  // For mobile menu, show ALL links
-  const mobileLinks = allLinks;
+  // Admin emails list
+  const ADMIN_EMAILS = ['kurtgavin.design@gmail.com', 'nicolemaaba@gmail.com', 'Agpfrancisco1@gmail.com'];
+
+  // For mobile menu, show ALL links + Admin Panel if authorized
+  const mobileLinks = [...allLinks];
+  if (user && ADMIN_EMAILS.includes(user.email)) {
+    // Insert Admin Panel before 'Profile' (which is the last item usually) or just push it. 
+    // Let's push it before Profile for better visibility or at the end? 
+    // The list is: Home, Stats, About, Stories, Form, Matches, Messages, Crush List, Profile.
+    // Let's insert it before Profile?
+    const profileIndex = mobileLinks.findIndex(link => link.label === 'Profile');
+    if (profileIndex !== -1) {
+      mobileLinks.splice(profileIndex, 0, { href: '/admin/dashboard', label: 'Admin Panel', icon: Activity, public: false });
+    } else {
+      mobileLinks.push({ href: '/admin/dashboard', label: 'Admin Panel', icon: Activity, public: false });
+    }
+  }
 
   // Track when component has mounted to prevent hydration mismatch
   useEffect(() => {
@@ -142,7 +157,7 @@ export default function Header() {
                         <User className="w-full h-full p-1 text-navy" />
                       )}
                     </div>
-                    <span className="uppercase">{user.firstName}</span>
+                    <span className="uppercase">{user.username ? user.username : user.firstName}</span>
                   </button>
 
                   <AnimatePresence>
@@ -165,7 +180,7 @@ export default function Header() {
                           <Link href="/profile/edit" className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-navy hover:bg-retro-yellow transition-colors">
                             <Settings className="w-4 h-4" /> EDIT PROFILE
                           </Link>
-                          {user.email === 'kurtgavin.design@gmail.com' && (
+                          {ADMIN_EMAILS.includes(user.email) && (
                             <Link href="/admin/dashboard" className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-navy hover:bg-retro-sky transition-colors">
                               <Activity className="w-4 h-4" /> ADMIN PANEL
                             </Link>

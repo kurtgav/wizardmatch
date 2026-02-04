@@ -14,6 +14,7 @@ import Footer from '@/components/layout/Footer';
 interface UserProfile {
     id: string;
     email: string;
+    username?: string;
     firstName: string;
     lastName: string;
     studentId?: string;
@@ -53,7 +54,8 @@ export default function ProfileView() {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const response = await fetch(`${baseUrl}/api/users/profile`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -64,9 +66,13 @@ export default function ProfileView() {
                 // Handle wrapped response
                 const data = result.success ? result.data : result;
                 setProfile(data);
+            } else {
+                console.error('Failed to fetch profile:', response.statusText);
+                setProfile(null);
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
+            setProfile(null);
         } finally {
             setIsLoading(false);
         }
@@ -195,16 +201,18 @@ export default function ProfileView() {
                                 </div>
 
                                 {/* Name */}
-                                <h2 className="font-pixel text-2xl text-navy mb-1 uppercase text-center tracking-tight">
-                                    {profile.firstName} {profile.lastName}
+                                <h2 className="font-pixel text-2xl text-navy mb-1 uppercase text-center tracking-tight break-all">
+                                    {profile.username || `${profile.firstName} ${profile.lastName}`}
                                 </h2>
 
                                 {/* Student ID */}
-                                {profile.studentId && (
-                                    <p className="font-pixel text-xs text-navy/60 text-center mb-4">
-                                        ID: {profile.studentId}
-                                    </p>
-                                )}
+                                <div className="text-center mb-4">
+                                    {profile.studentId && (
+                                        <p className="font-pixel text-xs text-navy/60">
+                                            ID: {profile.studentId}
+                                        </p>
+                                    )}
+                                </div>
 
                                 {/* Survey Status */}
                                 <div className={`mt-4 p-3 border-4 ${profile.surveyCompleted ? 'border-green-600 bg-green-50' : 'border-cardinal-red bg-red-50'}`}>

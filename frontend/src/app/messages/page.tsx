@@ -43,12 +43,15 @@ export default function MessagesPage() {
         const isAdmin = user?.email === 'kurtgavin.design@gmail.com';
         const phase = campaignRes.data.phase;
 
-        // Only allow messaging during profile_update or results_released (unless admin)
-        if (phase !== 'profile_update' && phase !== 'results_released' && !isAdmin) {
+        // For testing/demo purposes, and since we are in "Wizard Match" mode:
+        // Unlock messaging if phase is profile_update, results_released, OR if running in development, OR if the user is an Admin.
+        const isDev = process.env.NODE_ENV === 'development';
+        // Relaxed condition:
+        if (phase !== 'profile_update' && phase !== 'results_released' && !isAdmin && !isDev) {
           setMessagingLocked(true);
           const phaseMessages: Record<string, string> = {
             pre_launch: 'Messaging opens when the matching period begins',
-            survey_open: 'Complete your survey first! Messaging opens during the profile update period (February 11-13)',
+            survey_open: 'Complete your survey first! Messaging opens during the profile update period',
             survey_closed: 'Matching is in progress. Messaging opens soon!',
             profile_update: 'Messaging available',
             results_released: 'Messaging available',

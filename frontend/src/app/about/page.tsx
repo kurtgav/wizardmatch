@@ -178,6 +178,88 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* Meet the Team */}
+        <section className="py-20 bg-retro-cream border-y-8 border-navy">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <h2 className="font-display font-black text-4xl md:text-5xl text-navy mb-6">
+                Meet the <span className="text-retro-pink">Cupids</span>
+              </h2>
+              <p className="font-display text-xl text-navy max-w-2xl mx-auto leading-relaxed">
+                We are Mapúa Malayan Colleges Laguna students, and soon we are planning to expand this website to bring even more magic to your connections.
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+              {/* Kurt Gavin */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -8 }}
+                className="flex flex-col items-center text-center"
+              >
+                <div className="w-48 h-48 rounded-full border-8 border-navy overflow-hidden bg-retro-sky mb-6 relative shadow-[8px_8px_0_0_#1E3A8A]">
+                  {/* Placeholder for Kurt */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-retro-sky">
+                    <img src="/kurt - founder.jpg" alt="Kurt Gavin" className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = '<svg class="w-24 h-24 text-navy/20" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                      }}
+                    />
+                  </div>
+                </div>
+                <h3 className="font-display font-black text-3xl text-cardinal-red mb-2">
+                  Kurt Gavin
+                </h3>
+                <p className="font-pixel text-sm text-navy/60 uppercase tracking-widest mb-2">
+                  Computer Science
+                </p>
+                <p className="font-display font-bold text-navy">
+                  Founder & Solo Developer
+                </p>
+              </motion.div>
+
+              {/* Nicole Franchezka */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -8 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col items-center text-center"
+              >
+                <div className="w-48 h-48 rounded-full border-8 border-navy overflow-hidden bg-retro-pink mb-6 relative shadow-[8px_8px_0_0_#1E3A8A]">
+                  {/* Placeholder for Nicole */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-retro-pink">
+                    <img src="/nicole-pres.jpg" alt="Nicole Franchezka" className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.innerHTML = '<svg class="w-24 h-24 text-navy/20" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                      }}
+                    />
+                  </div>
+                </div>
+                <h3 className="font-display font-black text-3xl text-cardinal-red mb-2">
+                  Nicole Franchezka
+                </h3>
+                <p className="font-pixel text-sm text-navy/60 uppercase tracking-widest mb-2">
+                  Psychology
+                </p>
+                <p className="font-display font-bold text-navy">
+                  President - SSC
+                </p>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
         {/* Privacy & Safety */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4 max-w-4xl">

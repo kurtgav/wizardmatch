@@ -25,7 +25,7 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState('');
 
   // Admin email check - should match backend
-  const ADMIN_EMAILS = ['kurtgavin.design@gmail.com', 'admin@wizardmatch.ai'];
+  const ADMIN_EMAILS = ['kurtgavin.design@gmail.com', 'nicolemaaba@gmail.com', 'Agpfrancisco1@gmail.com'];
 
   useEffect(() => {
     // Check if user is authenticated

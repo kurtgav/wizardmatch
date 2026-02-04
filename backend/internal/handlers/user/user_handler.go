@@ -78,6 +78,12 @@ func UpdateProfile(c *gin.Context) {
 	if val, ok := updateData["seekingGender"]; ok {
 		dbUpdateData["seeking_gender"] = val
 	}
+	if val, ok := updateData["firstName"]; ok {
+		dbUpdateData["first_name"] = val
+	}
+	if val, ok := updateData["lastName"]; ok {
+		dbUpdateData["last_name"] = val
+	}
 
 	// Update the user in the database
 	if err := database.DB.Model(&models.User{}).Where("id = ?", user.ID).Updates(dbUpdateData).Error; err != nil {

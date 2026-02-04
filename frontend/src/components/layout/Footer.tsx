@@ -253,9 +253,9 @@ export default function Footer() {
               }}
             >
               <p className="font-pixel text-xs text-white/60 flex items-center gap-1">
-                Made with{' '}
+                Created {' '}
                 <Heart className="w-4 h-4 fill-retro-pink text-retro-pink animate-pulse" />{' '}
-                by Wizards
+                by Kurt Gavin
               </p>
               <Flower className="w-4 h-4 text-retro-yellow" />
             </motion.div>

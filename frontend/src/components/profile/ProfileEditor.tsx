@@ -18,6 +18,8 @@ interface ProfileEditorProps {
     profileVisibility?: 'Public' | 'Matches Only' | 'Private';
     gender?: string;
     seekingGender?: string;
+    firstName?: string;
+    lastName?: string;
   };
   onSave: (data: {
     username?: string;
@@ -32,6 +34,8 @@ interface ProfileEditorProps {
     profileVisibility?: 'Public' | 'Matches Only' | 'Private';
     gender?: string;
     seekingGender?: string;
+    firstName?: string;
+    lastName?: string;
   }) => Promise<void>;
   isReadOnly?: boolean;
   className?: string;
@@ -59,6 +63,8 @@ export function ProfileEditor({
   );
   const [gender, setGender] = useState(profile.gender || '');
   const [seekingGender, setSeekingGender] = useState(profile.seekingGender || '');
+  const [firstName, setFirstName] = useState(profile.firstName || '');
+  const [lastName, setLastName] = useState(profile.lastName || '');
 
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -78,9 +84,11 @@ export function ProfileEditor({
       contactPreference !== (profile.contactPreference || 'Instagram') ||
       profileVisibility !== (profile.profileVisibility || 'Matches Only') ||
       gender !== (profile.gender || '') ||
-      seekingGender !== (profile.seekingGender || '')
+      seekingGender !== (profile.seekingGender || '') ||
+      firstName !== (profile.firstName || '') ||
+      lastName !== (profile.lastName || '')
     );
-  }, [username, bio, profilePhotoUrl, instagramHandle, facebookProfile, program, yearLevel, phoneNumber, contactPreference, profileVisibility, profile]);
+  }, [username, bio, profilePhotoUrl, instagramHandle, facebookProfile, program, yearLevel, phoneNumber, contactPreference, profileVisibility, profile, firstName, lastName]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -117,6 +125,8 @@ export function ProfileEditor({
         profileVisibility,
         gender,
         seekingGender,
+        firstName,
+        lastName,
       });
     } finally {
       setIsSaving(false);
@@ -303,6 +313,32 @@ export function ProfileEditor({
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-pink transition-colors"
                 />
+              </div>
+
+              {/* Name Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                    FIRST NAME
+                  </label>
+                  <input
+                    placeholder="E.g. John"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-navy transition-colors"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                    LAST NAME
+                  </label>
+                  <input
+                    placeholder="E.g. Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-navy transition-colors"
+                  />
+                </div>
               </div>
 
               {/* Identity & Matching */}
@@ -528,6 +564,8 @@ export function ProfileEditor({
                   setProfileVisibility(profile.profileVisibility || 'Matches Only');
                   setGender(profile.gender || '');
                   setSeekingGender(profile.seekingGender || '');
+                  setFirstName(profile.firstName || '');
+                  setLastName(profile.lastName || '');
                 }}
                 className="p-8 border-4 border-navy text-navy/40 hover:bg-retro-cream transition-colors shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
                 title="Discard changes"

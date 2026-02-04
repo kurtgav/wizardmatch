@@ -74,7 +74,7 @@ func RequireAdmin() gin.HandlerFunc {
 		}
 
 		user := val.(models.User)
-		adminEmails := []string{"kurtgavin.design@gmail.com", "admin@wizardmatch.ai"}
+		adminEmails := []string{"kurtgavin.design@gmail.com", "nicolemaaba@gmail.com", "Agpfrancisco1@gmail.com"}
 
 		isAdmin := false
 		for _, email := range adminEmails {

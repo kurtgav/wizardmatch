@@ -145,6 +145,13 @@ export async function updateProfile(data: {
   bio?: string;
   profilePhotoUrl?: string;
   instagramHandle?: string;
+  facebookProfile?: string;
+  program?: string;
+  yearLevel?: number;
+  gender?: string;
+  seekingGender?: string;
+  firstName?: string;
+  lastName?: string;
   socialMediaName?: string;
   phoneNumber?: string;
   contactPreference?: string;
