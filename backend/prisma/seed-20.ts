@@ -34,7 +34,14 @@ async function main() {
             });
         }
 
-        // Delete existing questions for this campaign
+        // 2. Deactivate ALL existing active questions to ensure we only have the 20 new ones
+        console.log('🧹 Deactivating all existing active questions...');
+        await prisma.question.updateMany({
+            where: { isActive: true },
+            data: { isActive: false }
+        });
+
+        // Also purge any questions for the current campaign to avoid duplicates if we re-run
         await prisma.question.deleteMany({
             where: { campaignId: campaign.id }
         });

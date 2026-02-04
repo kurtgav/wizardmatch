@@ -302,6 +302,18 @@ export const adminController = {
     });
   }),
 
+  getPublishedTestimonials: asyncHandler(async (req: Request, res: Response) => {
+    const testimonials = await prisma.testimonial.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json({
+      success: true,
+      data: testimonials,
+    });
+  }),
+
   createTestimonial: asyncHandler(async (req: Request, res: Response) => {
     const { authorName, program, title, content } = req.body;
 

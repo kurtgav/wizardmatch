@@ -14,10 +14,10 @@ const allLinks = [
   { href: '/about', label: 'About', icon: Info, public: true },
   { href: '/testimonials', label: 'Stories', icon: Heart, public: true },
   { href: '/survey', label: 'Form', icon: FileText, public: true },
-  { href: '/matches', label: 'Matches', icon: Heart, public: false },
+  { href: '/matches', label: 'Matches', icon: Heart, public: true },
   { href: '/messages', label: 'Messages', icon: MessageCircle, public: false },
   { href: '/crush-list', label: 'Crush List', icon: Gift, public: false },
-  { href: '/profile/edit', label: 'Profile', icon: User, public: false },
+  { href: '/profile', label: 'Profile', icon: User, public: false },
 ];
 
 export default function Header() {
@@ -26,6 +26,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
 
   // For desktop, show public links + private links if logged in
@@ -33,6 +34,11 @@ export default function Header() {
 
   // For mobile menu, show ALL links
   const mobileLinks = allLinks;
+
+  // Track when component has mounted to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,7 +129,7 @@ export default function Header() {
             {/* ACTIONS SECTION */}
             <div className="flex items-center gap-4">
               {/* Desktop User Dropdown */}
-              {!loading && user && (
+              {isMounted && !loading && user && (
                 <div className="hidden xl:relative xl:block">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -142,9 +148,10 @@ export default function Header() {
                   <AnimatePresence>
                     {userMenuOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
                         className="absolute right-0 mt-2 w-56 bg-white border-4 border-navy shadow-[8px_8px_0_0_#1E3A8A] z-[110]"
                       >
                         <div className="p-3 border-b-4 border-navy/10 bg-retro-cream/30">
@@ -152,6 +159,9 @@ export default function Header() {
                           <p className="font-display font-black text-sm text-navy truncate">{user.email}</p>
                         </div>
                         <div className="p-1">
+                          <Link href="/profile" className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-navy hover:bg-retro-sky transition-colors">
+                            <User className="w-4 h-4" /> VIEW PROFILE
+                          </Link>
                           <Link href="/profile/edit" className="flex items-center gap-3 w-full px-4 py-3 font-display font-black text-xs text-navy hover:bg-retro-yellow transition-colors">
                             <Settings className="w-4 h-4" /> EDIT PROFILE
                           </Link>
@@ -171,7 +181,7 @@ export default function Header() {
               )}
 
               {/* Login Button for Desktop */}
-              {!loading && !user && (
+              {isMounted && !loading && !user && (
                 <Link
                   href="/auth/login"
                   className="hidden xl:inline-flex bg-cardinal-red text-white px-6 py-2 border-4 border-navy font-display font-black text-sm shadow-[4px_4px_0_0_#1E3A8A] hover:bg-red-600 transition-all uppercase tracking-tight"
@@ -199,6 +209,7 @@ export default function Header() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 w-full h-full bg-retro-cream z-[200] flex flex-col pt-24"
           >
             {/* Background Grid */}
@@ -232,7 +243,7 @@ export default function Header() {
                       key={link.href}
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.03, duration: 0.2 }}
                     >
                       <Link
                         href={isLocked ? '/auth/login' : link.href}
@@ -272,7 +283,7 @@ export default function Header() {
 
                 {/* Footer Actions in Mobile Menu */}
                 <div className="mt-8">
-                  {user ? (
+                  {isMounted && user ? (
                     <motion.button
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
@@ -281,7 +292,7 @@ export default function Header() {
                     >
                       <LogOut className="w-5 h-5 text-retro-yellow" /> DISCONNECT
                     </motion.button>
-                  ) : (
+                  ) : isMounted && !user ? (
                     <Link
                       href="/auth/login"
                       onClick={() => setMobileMenuOpen(false)}
@@ -289,7 +300,7 @@ export default function Header() {
                     >
                       <User className="w-5 h-5" /> MEMBER LOGIN
                     </Link>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>

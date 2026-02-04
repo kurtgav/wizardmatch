@@ -7,7 +7,7 @@ const router = Router();
 router.post('/testimonials', adminController.createTestimonial);
 
 // Public testimonials
-router.get('/testimonials', adminController.getTestimonials);
+router.get('/testimonials', adminController.getPublishedTestimonials);
 
 // Public stats
 router.get('/stats', adminController.getPublicStats);

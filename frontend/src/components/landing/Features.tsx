@@ -89,6 +89,7 @@ export default function Features() {
               repeat: Infinity,
               delay: i * 0.3,
             }}
+            viewport={{ once: true }}
           >
             <div className={`w-4 h-4 ${i % 2 === 0 ? 'bg-retro-pink' : 'bg-retro-sky'
               } border-2 border-navy`} />

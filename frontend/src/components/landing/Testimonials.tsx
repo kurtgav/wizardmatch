@@ -90,6 +90,7 @@ export default function Testimonials() {
               repeat: Infinity,
               delay: i * 0.4,
             }}
+            viewport={{ once: true }}
           >
             <Heart className="w-6 h-6 text-retro-pink fill-current" />
           </motion.div>

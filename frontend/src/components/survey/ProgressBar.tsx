@@ -30,7 +30,7 @@ export default function ProgressBar({ progress }: ProgressBarProps) {
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${safeProgress}%` }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
           className="h-full bg-gradient-to-r from-retro-pink via-cardinal-red to-retro-rose relative"
           style={{
             borderRight: '4px solid #1E3A8A'

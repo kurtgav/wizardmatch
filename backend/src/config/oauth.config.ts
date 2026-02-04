@@ -19,7 +19,7 @@ passport.use(
           family_name: profile.name?.familyName,
         };
 
-        return done(null, user);
+        return done(null, user as any);
       } catch (error) {
         return done(error as Error);
       }

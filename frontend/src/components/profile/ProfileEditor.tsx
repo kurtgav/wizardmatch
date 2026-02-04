@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Camera, Save, Eye, EyeOff, X, Check, Loader2, User, FileText, Globe, Phone, Instagram } from 'lucide-react';
+import { Camera, Save, Eye, EyeOff, X, Check, Loader2, User, FileText, Globe, Phone, Instagram, Facebook, GraduationCap, BookOpen, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileEditorProps {
@@ -10,20 +10,28 @@ interface ProfileEditorProps {
     bio?: string;
     profilePhotoUrl?: string;
     instagramHandle?: string;
-    socialMediaName?: string;
+    facebookProfile?: string;
+    program?: string;
+    yearLevel?: number;
     phoneNumber?: string;
-    contactPreference?: 'Instagram' | 'Phone';
+    contactPreference?: 'Instagram' | 'Facebook' | 'Phone';
     profileVisibility?: 'Public' | 'Matches Only' | 'Private';
+    gender?: string;
+    seekingGender?: string;
   };
   onSave: (data: {
     username?: string;
     bio?: string;
     profilePhotoUrl?: string;
     instagramHandle?: string;
-    socialMediaName?: string;
+    facebookProfile?: string;
+    program?: string;
+    yearLevel?: number;
     phoneNumber?: string;
-    contactPreference?: 'Instagram' | 'Phone';
+    contactPreference?: 'Instagram' | 'Facebook' | 'Phone';
     profileVisibility?: 'Public' | 'Matches Only' | 'Private';
+    gender?: string;
+    seekingGender?: string;
   }) => Promise<void>;
   isReadOnly?: boolean;
   className?: string;
@@ -39,14 +47,18 @@ export function ProfileEditor({
   const [bio, setBio] = useState(profile.bio || '');
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(profile.profilePhotoUrl || '');
   const [instagramHandle, setInstagramHandle] = useState(profile.instagramHandle || '');
-  const [socialMediaName, setSocialMediaName] = useState(profile.socialMediaName || '');
+  const [facebookProfile, setFacebookProfile] = useState(profile.facebookProfile || '');
+  const [program, setProgram] = useState(profile.program || '');
+  const [yearLevel, setYearLevel] = useState<number>(profile.yearLevel || 1);
   const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber || '');
-  const [contactPreference, setContactPreference] = useState<'Instagram' | 'Phone'>(
+  const [contactPreference, setContactPreference] = useState<'Instagram' | 'Facebook' | 'Phone'>(
     (profile.contactPreference as any) === 'Email' ? 'Instagram' : profile.contactPreference || 'Instagram'
   );
   const [profileVisibility, setProfileVisibility] = useState<'Public' | 'Matches Only' | 'Private'>(
     profile.profileVisibility || 'Matches Only'
   );
+  const [gender, setGender] = useState(profile.gender || '');
+  const [seekingGender, setSeekingGender] = useState(profile.seekingGender || '');
 
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -59,12 +71,16 @@ export function ProfileEditor({
       bio !== (profile.bio || '') ||
       profilePhotoUrl !== (profile.profilePhotoUrl || '') ||
       instagramHandle !== (profile.instagramHandle || '') ||
-      socialMediaName !== (profile.socialMediaName || '') ||
+      facebookProfile !== (profile.facebookProfile || '') ||
+      program !== (profile.program || '') ||
+      yearLevel !== (profile.yearLevel || 1) ||
       phoneNumber !== (profile.phoneNumber || '') ||
       contactPreference !== (profile.contactPreference || 'Instagram') ||
-      profileVisibility !== (profile.profileVisibility || 'Matches Only')
+      profileVisibility !== (profile.profileVisibility || 'Matches Only') ||
+      gender !== (profile.gender || '') ||
+      seekingGender !== (profile.seekingGender || '')
     );
-  }, [username, bio, profilePhotoUrl, instagramHandle, socialMediaName, phoneNumber, contactPreference, profileVisibility, profile]);
+  }, [username, bio, profilePhotoUrl, instagramHandle, facebookProfile, program, yearLevel, phoneNumber, contactPreference, profileVisibility, profile]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,10 +109,14 @@ export function ProfileEditor({
         bio,
         profilePhotoUrl,
         instagramHandle,
-        socialMediaName,
+        facebookProfile,
+        program,
+        yearLevel,
         phoneNumber,
         contactPreference,
         profileVisibility,
+        gender,
+        seekingGender,
       });
     } finally {
       setIsSaving(false);
@@ -123,16 +143,26 @@ export function ProfileEditor({
             </div>
             {/* Pixel badge for read-only */}
             <div className="absolute -bottom-2 -right-2 bg-retro-yellow border-2 border-navy px-2 py-0.5">
-              <p className="font-pixel text-[8px] text-navy">LEVEL 1</p>
+              <p className="font-pixel text-[8px] text-navy">LEVEL {profile.yearLevel || 1}</p>
             </div>
           </div>
           <div>
             <h2 className="font-pixel text-xl text-navy mb-1 uppercase tracking-tight">
               {profile.username || 'Mysterious Wizard'}
             </h2>
-            <div className="inline-flex items-center gap-2 bg-retro-sky/10 border-2 border-dashed border-navy/20 px-3 py-1">
-              <Instagram className="w-3 h-3 text-navy/40" />
-              <p className="font-body text-xs text-navy/60">@{profile.instagramHandle || 'no_instagram'}</p>
+            <div className="flex flex-col gap-1">
+              {profile.instagramHandle && (
+                <div className="inline-flex items-center gap-2 bg-retro-sky/10 border-2 border-dashed border-navy/20 px-3 py-1">
+                  <Instagram className="w-3 h-3 text-navy/40" />
+                  <p className="font-body text-xs text-navy/60">@{profile.instagramHandle}</p>
+                </div>
+              )}
+              {profile.program && (
+                <div className="inline-flex items-center gap-2">
+                  <GraduationCap className="w-3 h-3 text-navy/40" />
+                  <p className="font-body text-xs text-navy/60">{profile.program}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -262,46 +292,136 @@ export function ProfileEditor({
         <div className="lg:col-span-2 space-y-8">
           <div className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A]">
             <div className="space-y-8">
-              {/* Username & Social */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
-                    <User className="w-3 h-3 text-retro-pink" /> USERNAME
-                  </label>
-                  <input
-                    placeholder="E.g. StarGazer"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-pink transition-colors"
-                  />
-                </div>
-                <div className="space-y-3">
-                  <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
-                    <Instagram className="w-3 h-3 text-retro-sky" /> INSTAGRAM
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-pixel text-navy/40">@</span>
-                    <input
-                      placeholder="username"
-                      value={instagramHandle?.replace('@', '')}
-                      onChange={(e) => setInstagramHandle(e.target.value)}
-                      className="w-full bg-retro-cream border-4 border-navy pl-10 p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-sky transition-colors"
-                    />
+              {/* Username */}
+              <div className="space-y-3">
+                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                  <User className="w-3 h-3 text-retro-pink" /> USERNAME
+                </label>
+                <input
+                  placeholder="E.g. StarGazer"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-pink transition-colors"
+                />
+              </div>
+
+              {/* Identity & Matching */}
+              <div>
+                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2 mb-4 p-2 bg-retro-pink/20">
+                  <Heart className="w-3 h-3 text-navy" /> MATCHING PREFERENCES
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest">
+                      I AM
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-navy transition-colors appearance-none"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-binary">Non-binary</option>
+                      </select>
+                      <User className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest">
+                      LOOKING FOR
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={seekingGender}
+                        onChange={(e) => setSeekingGender(e.target.value)}
+                        className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-navy transition-colors appearance-none"
+                      >
+                        <option value="">Select Preference</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Any">Any</option>
+                      </select>
+                      <Heart className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Social Media Name */}
-              <div className="space-y-3">
-                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
-                  <Globe className="w-3 h-3 text-retro-mint" /> DISPLAY NAME
+              {/* Academic Information */}
+              <div>
+                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2 mb-4 p-2 bg-retro-yellow/20">
+                  <GraduationCap className="w-3 h-3 text-navy" /> ACADEMIC INFORMATION
                 </label>
-                <input
-                  placeholder="E.g. Artie Wizard"
-                  value={socialMediaName}
-                  onChange={(e) => setSocialMediaName(e.target.value)}
-                  className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-mint transition-colors"
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest">
+                      PROGRAM
+                    </label>
+                    <input
+                      placeholder="E.g. Computer Science"
+                      value={program}
+                      onChange={(e) => setProgram(e.target.value)}
+                      className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-navy transition-colors"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest">
+                      YEAR LEVEL
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={yearLevel}
+                        onChange={(e) => setYearLevel(Number(e.target.value))}
+                        className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-navy transition-colors appearance-none"
+                      >
+                        {[1, 2, 3, 4, 5].map(year => (
+                          <option key={year} value={year}>Year {year}</option>
+                        ))}
+                      </select>
+                      <BookOpen className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy/40 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div>
+                <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2 mb-4 p-2 bg-retro-sky/20">
+                  <Globe className="w-3 h-3 text-navy" /> SOCIAL MEDIA
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                      <Instagram className="w-3 h-3 text-retro-sky" /> INSTAGRAM
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-pixel text-navy/40">@</span>
+                      <input
+                        placeholder="username"
+                        value={instagramHandle?.replace('@', '')}
+                        onChange={(e) => setInstagramHandle(e.target.value)}
+                        className="w-full bg-retro-cream border-4 border-navy pl-10 p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-retro-sky transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="font-pixel text-[10px] text-navy/40 uppercase tracking-widest flex items-center gap-2">
+                      <Facebook className="w-3 h-3 text-blue-600" /> FACEBOOK
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Profile Link / Name"
+                        value={facebookProfile}
+                        onChange={(e) => setFacebookProfile(e.target.value)}
+                        className="w-full bg-retro-cream border-4 border-navy p-4 font-body text-navy focus:outline-none focus:bg-white focus:border-blue-600 transition-colors"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Bio */}
@@ -326,6 +446,7 @@ export function ProfileEditor({
                 <div className="flex flex-wrap gap-4">
                   {[
                     { value: 'Instagram', icon: Instagram, label: 'INSTAGRAM' },
+                    { value: 'Facebook', icon: Facebook, label: 'FACEBOOK' },
                     { value: 'Phone', icon: Phone, label: 'PHONE CALL' },
                   ].map((method) => (
                     <button
@@ -399,10 +520,14 @@ export function ProfileEditor({
                   setBio(profile.bio || '');
                   setProfilePhotoUrl(profile.profilePhotoUrl || '');
                   setInstagramHandle(profile.instagramHandle || '');
-                  setSocialMediaName(profile.socialMediaName || '');
+                  setFacebookProfile(profile.facebookProfile || '');
+                  setProgram(profile.program || '');
+                  setYearLevel(profile.yearLevel || 1);
                   setPhoneNumber(profile.phoneNumber || '');
                   setContactPreference((profile.contactPreference as any) === 'Email' ? 'Instagram' : profile.contactPreference || 'Instagram');
                   setProfileVisibility(profile.profileVisibility || 'Matches Only');
+                  setGender(profile.gender || '');
+                  setSeekingGender(profile.seekingGender || '');
                 }}
                 className="p-8 border-4 border-navy text-navy/40 hover:bg-retro-cream transition-colors shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
                 title="Discard changes"
@@ -415,5 +540,4 @@ export function ProfileEditor({
       </div>
     </div>
   );
-
 }

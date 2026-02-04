@@ -78,12 +78,12 @@ export default function Hero() {
         return () => clearInterval(timer);
     }, []);
 
-    // Retro pixel sparkles
-    const pixelSparkles = Array.from({ length: 16 }, (_, i) => ({
+    // Reduced retro pixel sparkles for performance
+    const pixelSparkles = Array.from({ length: 8 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
         y: Math.random() * 100,
-        delay: i * 0.15,
+        delay: i * 0.2,
     }));
 
     return (
@@ -142,6 +142,7 @@ export default function Hero() {
                             repeat: Infinity,
                             delay: i * 0.2,
                         }}
+                        viewport={{ once: true }}
                     >
                         <Heart
                             className={`${i % 2 === 0 ? 'text-retro-pink' : 'text-cardinal-red'
@@ -238,13 +239,15 @@ export default function Hero() {
                             transition={{ delay: 0.6 }}
                             className="space-y-4 mb-8"
                         >
-                            <Link
-                                href="/auth/login"
-                                className="group inline-flex items-center gap-4 bg-retro-yellow text-navy px-10 py-5 border-4 border-navy font-pixel text-sm shadow-[8px_8px_0_0_#1E3A8A] hover:shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all"
-                            >
-                                <span>START GAME</span>
-                                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-                            </Link>
+                            <motion.div whileTap={{ scale: 0.97 }}>
+                                <Link
+                                    href="/auth/login"
+                                    className="group inline-flex items-center gap-4 bg-retro-yellow text-navy px-10 py-5 border-4 border-navy font-pixel text-sm shadow-[8px_8px_0_0_#1E3A8A] hover:shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 transition-all"
+                                >
+                                    <span>START GAME</span>
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                                </Link>
+                            </motion.div>
 
                             <p className="font-body text-sm text-navy/70 flex items-center gap-2">
                                 <Heart className="w-4 h-4 text-cardinal-red fill-current" />
@@ -353,19 +356,21 @@ export default function Hero() {
                                     <motion.div
                                         className="relative w-8/9 aspect-square flex items-center justify-center p-4"
                                         animate={{
-                                            y: [0, -15, 0],
-                                            rotate: [-2, 2, -2]
+                                            y: [0, -10, 0],
                                         }}
                                         transition={{
-                                            duration: 5,
+                                            duration: 6,
                                             repeat: Infinity,
                                             ease: "easeInOut"
                                         }}
                                     >
-                                        <img
+                                        <Image
                                             src="/images/wizardmatch-logo.png"
                                             alt="Wizard Match Logo"
-                                            className="w-full h-full object-contain"
+                                            width={400}
+                                            height={400}
+                                            className="object-contain"
+                                            priority
                                         />
                                     </motion.div>
 

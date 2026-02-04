@@ -75,28 +75,7 @@ export default function AdminDashboardPage() {
     }
   }
 
-  async function handleGenerateMatches() {
-    if (!confirm('Are you sure you want to regenerate all matches? This will delete existing matches.')) {
-      return;
-    }
 
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/generate-matches`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (data.success) {
-        alert(data.message);
-        loadStats();
-      }
-    } catch (error) {
-      console.error('Failed to generate matches:', error);
-    }
-  }
 
   if (authLoading || loading) {
     return (
@@ -228,44 +207,41 @@ export default function AdminDashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="grid md:grid-cols-2 gap-8"
         >
-          <button
-            onClick={handleGenerateMatches}
-            className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A] hover:bg-retro-cream hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#1E3A8A] transition-all text-left group"
-          >
+          <Link href="/admin/matches" className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A] hover:bg-retro-cream hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#1E3A8A] transition-all text-left group">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-14 h-14 bg-cardinal-red border-2 border-navy flex items-center justify-center group-hover:animate-pulse">
                 <Heart className="w-7 h-7 text-white" />
               </div>
               <div>
                 <h3 className="font-pixel text-lg text-navy font-bold">
-                  GENERATE MATCHES
+                  MATCHING CENTER
                 </h3>
                 <p className="font-body text-xs text-navy/60">
-                  Run the matching algorithm
+                  Auto & Manual Matching
                 </p>
               </div>
             </div>
             <p className="font-body text-sm text-navy/80 border-t-2 border-navy/10 pt-4 mt-2">
-              WARNING: This will calculate matches for all eligible users. Existing matches will be overwritten.
+              Access the matching dashboard to generate algorithmic matches or manually pair users.
             </p>
-          </button>
+          </Link>
 
-          <Link href="/admin/matches/manual" className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A] hover:bg-retro-cream hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#1E3A8A] transition-all text-left group">
+          <Link href="/admin/users" className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A] hover:bg-retro-cream hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#1E3A8A] transition-all text-left group">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-14 h-14 bg-retro-mint border-2 border-navy flex items-center justify-center">
                 <Users className="w-7 h-7 text-navy" />
               </div>
               <div>
                 <h3 className="font-pixel text-lg text-navy font-bold">
-                  MANUAL MATCHING
+                  MANAGE USERS
                 </h3>
                 <p className="font-body text-xs text-navy/60">
-                  Pair users manually
+                  View and match users
                 </p>
               </div>
             </div>
             <p className="font-body text-sm text-navy/80 border-t-2 border-navy/10 pt-4 mt-2">
-              Select two individuals and match them together. This overrides any algorithmic results.
+              View all users, see their profiles, and manually create matches between selected users.
             </p>
           </Link>
 
@@ -285,6 +261,25 @@ export default function AdminDashboardPage() {
             </div>
             <p className="font-body text-sm text-navy/80 border-t-2 border-navy/10 pt-4 mt-2">
               See detailed analytics regarding user demographics, survey responses, and match distribution.
+            </p>
+          </Link>
+
+          <Link href="/admin/testimonials" className="bg-white border-4 border-navy p-8 shadow-[8px_8px_0_0_#1E3A8A] hover:bg-retro-cream hover:translate-x-1 hover:translate-y-1 hover:shadow-[4px_4px_0_0_#1E3A8A] transition-all text-left block">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-14 h-14 bg-retro-plum border-2 border-navy flex items-center justify-center">
+                <Heart className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="font-pixel text-lg text-navy font-bold">
+                  MANAGE STORIES
+                </h3>
+                <p className="font-body text-xs text-navy/60">
+                  Review testimonials
+                </p>
+              </div>
+            </div>
+            <p className="font-body text-sm text-navy/80 border-t-2 border-navy/10 pt-4 mt-2">
+              Review, approve, and publish user submitted success stories and testimonials.
             </p>
           </Link>
         </motion.div>

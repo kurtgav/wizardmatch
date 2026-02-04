@@ -1,5 +1,4 @@
-'use client';
-
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Heart, Eye, Lock, Flower } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -36,9 +35,10 @@ export default function MatchCard({ match, onReveal, onClick }: MatchCardProps) 
 
   return (
     <motion.div
-      whileHover={{ y: -8, rotate: -1 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
       className={cn(
-        'relative bg-white border-4 border-navy p-6 shadow-[8px_8px_0_0_#1E3A8A] transition-all duration-300 cursor-pointer group',
+        'relative bg-white border-4 border-navy p-6 shadow-[8px_8px_0_0_#1E3A8A] transition-shadow duration-200 cursor-pointer group',
         !match.isRevealed && 'overflow-hidden'
       )}
       onClick={onClick}
@@ -70,14 +70,15 @@ export default function MatchCard({ match, onReveal, onClick }: MatchCardProps) 
       <div className="mb-6 mt-2 relative">
         <div className="w-28 h-28 mx-auto relative">
           {match.isRevealed && match.matchedUser.profilePhotoUrl ? (
-            <>
-              <img
+            <div className="relative w-full h-full overflow-hidden border-4 border-navy">
+              <Image
                 src={match.matchedUser.profilePhotoUrl}
                 alt={match.matchedUser.firstName}
-                className="w-full h-full object-cover border-4 border-navy bg-slate-200"
+                fill
+                className="object-cover bg-slate-200"
+                sizes="(max-width: 768px) 112px, 112px"
               />
-              <div className="absolute inset-0 border-4 border-navy pointer-events-none"></div>
-            </>
+            </div>
           ) : (
             <div className={cn(
               'w-full h-full border-4 border-navy flex items-center justify-center',

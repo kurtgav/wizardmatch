@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuthState } from '@/hooks/useAuthState';
 import { ProfileEditor } from '@/components/profile/ProfileEditor';
 import { updateProfile } from '@/lib/api-campaign';
+import { Heart } from 'lucide-react'; // Though not directly used here, maybe good practice. Wait, I don't need to import Heart here.
+
+// I will just update the setProfile call.
 
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -12,7 +15,7 @@ import Footer from '@/components/layout/Footer';
 export const dynamic = 'force-dynamic';
 
 export default function ProfileEditPage() {
-  const { user, loading: authLoading } = useAuthState();
+  const { user, loading: authLoading, mutate } = useAuthState();
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -29,19 +32,34 @@ export default function ProfileEditPage() {
 
     const loadData = async () => {
       try {
-        // Load user profile from API or session
+        // Load user profile from API
         if (user) {
-          // For now, initialize with empty values - will load from API
-          setProfile({
-            username: user.username || '',
-            bio: user.bio || '',
-            profilePhotoUrl: user.profilePhotoUrl || '',
-            instagramHandle: user.instagramHandle || '',
-            socialMediaName: user.socialMediaName || '',
-            phoneNumber: user.phoneNumber || '',
-            contactPreference: (user.contactPreference as any) === 'Email' ? 'Instagram' : user.contactPreference || 'Instagram',
-            profileVisibility: user.profileVisibility || 'Matches Only',
+          const token = localStorage.getItem('token');
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
           });
+
+          if (response.ok) {
+            const result = await response.json();
+            // Handle wrapped response
+            const profileData = result.success ? result.data : result;
+            setProfile({
+              username: profileData.username || '',
+              bio: profileData.bio || '',
+              profilePhotoUrl: profileData.profilePhotoUrl || '',
+              instagramHandle: profileData.instagramHandle || '',
+              facebookProfile: profileData.facebookProfile || '',
+              program: profileData.program || '',
+              yearLevel: profileData.yearLevel || 1,
+              phoneNumber: profileData.phoneNumber || '',
+              contactPreference: (profileData.contactPreference as any) === 'Email' ? 'Instagram' : profileData.contactPreference || 'Instagram',
+              profileVisibility: profileData.profileVisibility || 'Matches Only',
+              gender: profileData.gender || '',
+              seekingGender: profileData.seekingGender || '',
+            });
+          }
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load data');
@@ -60,13 +78,17 @@ export default function ProfileEditPage() {
     setError('');
     setSuccess('');
     try {
-      await updateProfile(data);
+      const result = await updateProfile(data);
+
+      // Refresh the user session to get updated data
+      if (mutate) {
+        await mutate();
+      }
 
       setSuccess('Profile saved successfully!');
       setSaving(false);
 
-      // Still allow redirect after a delay if desired, but here we stay on page
-      // scroll to top to see message
+      // Scroll to top to see message
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       setTimeout(() => setSuccess(''), 5000);

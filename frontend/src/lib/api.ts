@@ -158,6 +158,22 @@ class ApiClient {
       data
     );
   }
+
+  async getPublicTestimonials() {
+    return this.get<{ success: boolean; data: any[] }>('/api/public/testimonials');
+  }
+
+  // Admin Testimonial endpoints
+  async getAdminTestimonials() {
+    return this.get<{ success: boolean; data: any[] }>('/api/admin/testimonials');
+  }
+
+  async updateTestimonialStatus(id: string, isApproved: boolean, isPublished: boolean) {
+    return this.put<{ success: boolean; data: any; message: string }>(
+      `/api/admin/testimonials/${id}`,
+      { isApproved, isPublished }
+    );
+  }
 }
 
 export const api = new ApiClient(API_URL);

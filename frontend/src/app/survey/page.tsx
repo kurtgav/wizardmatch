@@ -131,7 +131,8 @@ export default function SurveyPage() {
 
       await api.submitResponse(submissionData);
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      // No delay for idle reset if it's too distracting, or shorter
+      setTimeout(() => setSaveStatus('idle'), 1000);
     } catch (error: any) {
       console.error('Failed to save answer:', error);
       setSaveStatus('error');
@@ -284,7 +285,7 @@ export default function SurveyPage() {
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -20, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15, ease: "easeInOut" }}
             >
               <QuestionCard
                 question={currentQuestion}

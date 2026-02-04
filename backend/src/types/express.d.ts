@@ -1,9 +1,10 @@
-// Extend Express Request interface
-declare namespace Express {
-  export interface Request {
-    user?: {
+declare global {
+  namespace Express {
+    interface User {
       id: string;
       email: string;
-    };
+    }
   }
 }
+
+export { };

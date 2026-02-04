@@ -19,7 +19,7 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className="bg-white border-8 border-navy shadow-[12px_12px_0_0_#1E3A8A] p-6 md:p-10 relative overflow-hidden"
     >
       {/* Corner Pixel Decoration */}
@@ -35,12 +35,12 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
             {question.options.map((option, index) => (
               <motion.button
                 key={index}
-                whileHover={{ scale: 1.01, x: 5 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.01, x: 3, transition: { duration: 0.15 } }}
+                whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
                 onClick={() => onAnswer(option)}
                 className={`w-full text-left p-5 border-4 transition-all font-display font-bold text-lg relative group ${answer === option
-                    ? 'bg-retro-pink border-navy text-navy shadow-[6px_6px_0_0_#1E3A8A]'
-                    : 'bg-white border-navy/20 text-navy/80 hover:border-navy hover:bg-retro-cream hover:text-navy hover:shadow-[4px_4px_0_0_#1E3A8A]'
+                  ? 'bg-retro-pink border-navy text-navy shadow-[6px_6px_0_0_#1E3A8A]'
+                  : 'bg-white border-navy/20 text-navy/80 hover:border-navy hover:bg-retro-cream hover:text-navy hover:shadow-[4px_4px_0_0_#1E3A8A]'
                   }`}
               >
                 <div className="flex items-center gap-4">
@@ -69,12 +69,12 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
               {Array.from({ length: question.options?.max || 10 }, (_, i) => i + (question.options?.min || 1)).map((value) => (
                 <motion.button
                   key={value}
-                  whileHover={{ scale: 1.1, y: -4 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.08, y: -3, transition: { duration: 0.15 } }}
+                  whileTap={{ scale: 0.95, transition: { duration: 0.1 } }}
                   onClick={() => onAnswer(value)}
                   className={`flex-1 min-w-[40px] aspect-square border-4 font-display font-black text-xl flex items-center justify-center transition-all ${answer === value
-                      ? 'bg-retro-sky border-navy text-navy shadow-[6px_6px_0_0_#1E3A8A]'
-                      : 'bg-white border-navy/10 text-navy/40 hover:border-navy hover:text-navy hover:shadow-[4px_4px_0_0_#1E3A8A]'
+                    ? 'bg-retro-sky border-navy text-navy shadow-[6px_6px_0_0_#1E3A8A]'
+                    : 'bg-white border-navy/10 text-navy/40 hover:border-navy hover:text-navy hover:shadow-[4px_4px_0_0_#1E3A8A]'
                     }`}
                 >
                   {value}

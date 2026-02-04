@@ -7,7 +7,8 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { api } from '@/lib/api';
 import MatchCard from '@/components/matches/MatchCard';
 import Header from '@/components/layout/Header';
-import { Heart, Lock, Flower2, AlertCircle, X, MessageCircle, User, GraduationCap, FileText } from 'lucide-react';
+import { Heart, Lock, Flower2, X, MessageCircle, User, GraduationCap, FileText } from 'lucide-react';
+import useSWR from 'swr';
 
 interface Match {
   id: string;
@@ -30,51 +31,55 @@ interface Match {
 export default function MatchesPage() {
   const { user, loading: authLoading } = useAuthState();
   const router = useRouter();
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-      return;
-    }
+  const fetcher = async () => {
+    const response = await api.getMatches();
+    return response.data || [];
+  };
 
-    if (user && !user.surveyCompleted) {
-      router.push('/survey');
-      return;
-    }
+  // Always fetch matches - no authentication required
+  const { data: matches = [], isLoading: matchesLoading, mutate: mutateMatches } = useSWR(
+    '/api/matches',
+    fetcher
+  );
 
-    if (user) {
-      loadMatches();
-    }
-  }, [user, authLoading, router]);
+  // Removed authentication restrictions - matches page is now accessible to all
+  // useEffect(() => {
+  //   if (!authLoading && !user) {
+  //     router.push('/auth/login');
+  //     return;
+  //   }
 
-  async function loadMatches() {
-    try {
-      const response = await api.getMatches();
-      // Ensure we have an array even if data is null/undefined
-      const matchesData = response.data || [];
-      setMatches(matchesData);
-    } catch (error) {
-      console.error('Failed to load matches:', error);
-      setMatches([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  //   if (user && !user.surveyCompleted) {
+  //     router.push('/survey');
+  //     return;
+  //   }
+  // }, [user, authLoading, router]);
 
   async function handleReveal(matchId: string) {
+    // Optimistic update
+    const updatedMatches = matches.map(m =>
+      m.id === matchId ? { ...m, isRevealed: true } : m
+    );
+
+    // Mutate and disable revalidation initially
+    mutateMatches(updatedMatches, false);
+
     try {
       await api.revealMatch(matchId);
-      // Reload matches
-      await loadMatches();
+      // Trigger full revalidation from server to be safe
+      mutateMatches();
     } catch (error) {
       console.error('Failed to reveal match:', error);
+      // Rollback on error
+      mutateMatches();
     }
   }
 
-  if (authLoading || loading) {
+  const loading = authLoading || matchesLoading;
+
+  if (authLoading || matchesLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-retro-cream">
         <Header />
@@ -150,9 +155,13 @@ export default function MatchesPage() {
             {matches.map((match, index) => (
               <motion.div
                 key={match.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{
+                  duration: 0.3,
+                  delay: index * 0.05,
+                  ease: "easeOut"
+                }}
               >
                 <MatchCard
                   match={match}
