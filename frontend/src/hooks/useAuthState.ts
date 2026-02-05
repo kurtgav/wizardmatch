@@ -10,12 +10,18 @@ export function useAuthState() {
   // Function to fetch user data
   const fetchUserData = useCallback(async (userId: string) => {
     try {
-      const { data: userData } = await supabase()
+      const { data: userData, error } = await supabase()
         .from('users')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
+      if (error) {
+        console.error('Error fetching user data:', error);
+        return null;
+      }
+
+      console.log('Fetched user data:', userData);
       return userData as User || null;
     } catch (err) {
       console.error('Error fetching user data:', err);
@@ -24,21 +30,37 @@ export function useAuthState() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     const getSession = async () => {
       try {
-        const { data: { session } } = await supabase().auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase().auth.getSession();
 
-        if (session?.user) {
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          if (mounted) {
+            setError(sessionError);
+            setLoading(false);
+          }
+          return;
+        }
+
+        console.log('Initial session:', session?.user?.email);
+
+        if (mounted && session?.user) {
           const userData = await fetchUserData(session.user.id);
+          console.log('Setting user:', userData);
           setUser(userData);
         }
 
-        setLoading(false);
+        if (mounted) setLoading(false);
       } catch (err) {
         console.error('Auth state error:', err);
-        setError(err as Error);
-        setLoading(false);
+        if (mounted) {
+          setError(err as Error);
+          setLoading(false);
+        }
       }
     };
 
@@ -49,10 +71,14 @@ export function useAuthState() {
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
 
+        if (!mounted) return;
+
         if (session?.user) {
           const userData = await fetchUserData(session.user.id);
+          console.log('Setting user from auth state change:', userData);
           setUser(userData);
         } else {
+          console.log('No session, setting user to null');
           setUser(null);
         }
 
@@ -61,6 +87,7 @@ export function useAuthState() {
     );
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [fetchUserData]);
