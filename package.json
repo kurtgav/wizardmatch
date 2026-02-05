@@ -9,6 +9,11 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:go": "bash ./scripts/dev-local.sh",
+    "db:up": "bash ./scripts/db-up.sh",
+    "db:down": "bash ./scripts/db-down.sh",
+    "seed:go": "cd backend-go && go run ./cmd/seed",
+    "test:go": "cd backend-go && go test ./...",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build": "npm run build:frontend && npm run build:backend",

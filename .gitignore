@@ -43,6 +43,19 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+bin/
+vendor/
+tmp/
+
 # Prisma
 backend/prisma/migrations/
 
