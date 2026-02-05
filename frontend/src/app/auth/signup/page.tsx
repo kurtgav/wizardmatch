@@ -5,24 +5,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Heart, Flower2, Wand2, Ghost, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
 function SignupContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user, loading: authLoading } = useAuthState();
+    const { user, loading: authLoading } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         // Redirect if already logged in
         if (!authLoading && user) {
-            if (user.surveyCompleted) {
-                router.push('/matches');
-            } else {
-                router.push('/survey');
-            }
+            router.push('/survey');
             return;
         }
 

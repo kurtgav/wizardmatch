@@ -5,24 +5,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Heart, Flower2, Wand2, Ghost, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading } = useAuthState();
+  const { user, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Redirect if already logged in
     if (!authLoading && user) {
-      if (user.surveyCompleted) {
-        router.push('/matches');
-      } else {
-        router.push('/survey');
-      }
+      router.push('/survey');
       return;
     }
 
@@ -53,7 +49,7 @@ function LoginContent() {
 
     if (accessToken && refreshToken) {
       // Supabase will handle the session automatically
-      router.push('/matches');
+      router.push('/survey');
     }
   }, [searchParams, user, authLoading, router]);
 
@@ -97,7 +93,7 @@ function LoginContent() {
       if (error) throw error;
 
       // Session will be automatically handled by Supabase
-      router.push('/matches');
+      router.push('/survey');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to sign in. Please try again.');
