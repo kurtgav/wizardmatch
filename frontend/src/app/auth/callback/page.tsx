@@ -11,52 +11,72 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get tokens from URL parameters
-        const accessToken = searchParams.get('access_token');
-        const refreshToken = searchParams.get('refresh_token');
+        const code = searchParams.get('code');
         const error = searchParams.get('error');
         const errorDescription = searchParams.get('error_description');
 
-        // Check for errors first
+        // Check for specific errors
         if (error) {
           console.error('OAuth error:', error, errorDescription);
-          router.push('/auth/login?error=' + encodeURIComponent(errorDescription || error));
+          router.push(`/auth/login?error=${encodeURIComponent(errorDescription || error)}`);
           return;
         }
 
-        // If we have tokens, set the session
-        if (accessToken && refreshToken) {
-          const { data: sessionData, error: sessionError } = await supabase().auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (sessionError) {
-            console.error('Session error:', sessionError);
-            router.push('/auth/login?error=' + encodeURIComponent(sessionError.message));
+        // 1. Handle PKCE Flow (Code Exchange)
+        if (code) {
+          const { error: exchangeError } = await supabase().auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
+            router.push(`/auth/login?error=${encodeURIComponent(exchangeError.message)}`);
             return;
           }
-
-          if (sessionData.session) {
-            router.push('/survey');
-            return;
-          }
-        }
-
-        // If no tokens in URL, check current session
-        const { data: existingSession } = await supabase().auth.getSession();
-        if (existingSession.session) {
+          // Success
           router.push('/survey');
           return;
         }
 
-        // If we get here, something went wrong
-        console.error('No session found after callback');
-        router.push('/auth/login?error=' + encodeURIComponent('Failed to authenticate'));
+        // 2. Handle Implicit Flow (Hash Fragment) or Existing Session
+        // Note: supabase-js automatically checks window.location.hash for tokens when getSession is called.
+        // We give it a moment to process or verify if a session already exists.
+        const { data: { session }, error: sessionError } = await supabase().auth.getSession();
+
+        if (sessionError) {
+          console.error('Session retrieval error:', sessionError);
+          router.push(`/auth/login?error=${encodeURIComponent(sessionError.message)}`);
+          return;
+        }
+
+        if (session) {
+          router.push('/survey');
+          return;
+        }
+
+        // 3. Fallback: Listen for auth state change (in case hash processing is slightly delayed)
+        const { data: { subscription } } = supabase().auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session) {
+            router.push('/survey');
+          }
+        });
+
+        // If no immediate session, no code, and no error, likely authentication failed or state wasn't picked up.
+        // We set a short timeout to allow the listener to fire or hash to process.
+        setTimeout(async () => {
+          const { data: { session: finalSession } } = await supabase().auth.getSession();
+          if (finalSession) {
+            router.push('/survey');
+          } else {
+            console.error('No session found after callback processing');
+            router.push('/auth/login?error=Authentication%20failed');
+          }
+        }, 1500);
+
+        return () => {
+          subscription.unsubscribe();
+        };
 
       } catch (err) {
-        console.error('Auth callback error:', err);
-        router.push('/auth/login?error=' + encodeURIComponent('Authentication failed'));
+        console.error('Auth callback unexpected error:', err);
+        router.push('/auth/login?error=Authentication%20failed');
       }
     };
 
@@ -67,7 +87,7 @@ function AuthCallbackContent() {
     <div className="min-h-screen bg-gradient-to-br from-navy via-purple-900 to-navy flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-retro-pink mx-auto mb-4"></div>
-        <p className="text-white font-pixel text-sm">Signing you in...</p>
+        <p className="text-white font-pixel text-sm">Validating magic spells...</p>
       </div>
     </div>
   );
