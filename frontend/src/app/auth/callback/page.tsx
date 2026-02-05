@@ -16,7 +16,7 @@ function AuthCallbackContent() {
         const search = window.location.search;
 
         // Let Supabase handle the session from the URL
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase().auth.getSession();
 
         if (error) {
           console.error('Auth callback error:', error);
@@ -26,7 +26,7 @@ function AuthCallbackContent() {
 
         if (data.session) {
           // Successfully authenticated, check if user has completed survey
-          const { data: userData } = await supabase
+          const { data: userData } = await supabase()
             .from('users')
             .select('surveyCompleted')
             .eq('id', data.session.user.id)
