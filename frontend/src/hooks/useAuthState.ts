@@ -41,14 +41,14 @@ export function useAuthState() {
     return {
       id: authUser.id,
       email: authUser.email || '',
-      username: null,
+      username: undefined,
       firstName,
       lastName,
       studentId: '',
       program: '',
       yearLevel: 1,
       gender: '',
-      seekingGender: '',
+      seekingGender: undefined,
       surveyCompleted: false,
       profilePhotoUrl: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture,
     };
