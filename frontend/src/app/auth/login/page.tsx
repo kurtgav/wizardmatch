@@ -62,7 +62,7 @@ function LoginContent() {
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase().auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/login`,
@@ -89,7 +89,7 @@ function LoginContent() {
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase().auth.signInWithPassword({
         email,
         password,
       });

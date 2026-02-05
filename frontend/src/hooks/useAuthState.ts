@@ -23,7 +23,7 @@ export interface User {
 const fetcher = async (url: string) => {
   try {
     // Get Supabase session
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase().auth.getSession();
 
     if (!session) {
       return null;

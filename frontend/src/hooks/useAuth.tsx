@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase().auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchUserProfile(session.user.id);
       } else {
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for changes on auth state (sign in, sign out, etc.)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase().auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         await fetchUserProfile(session.user.id);
       } else {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.data);
       } else {
         // If backend doesn't have the user, create from Supabase user
-        const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+        const { data: { user: supabaseUser } } = await supabase().auth.getUser();
 
         if (supabaseUser) {
           // Create a basic user object from Supabase user
@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    await supabase().auth.signOut();
     setUser(null);
     router.push('/auth/login');
   }
