@@ -7,86 +7,88 @@ import { useAuthState } from '@/hooks/useAuthState';
 import { api } from '@/lib/api';
 import MatchCard from '@/components/matches/MatchCard';
 import Header from '@/components/layout/Header';
-import { Heart, Lock, Flower2, X, MessageCircle, User, GraduationCap, FileText } from 'lucide-react';
+import { Heart, Lock, Flower2 } from 'lucide-react';
 import useSWR from 'swr';
+import { toast } from 'sonner';
 
-interface Match {
+interface PotentialMatch {
   id: string;
-  matchedUser: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    program: string;
-    yearLevel: number;
-    profilePhotoUrl: string | null;
-    bio: string | null;
-  };
-  compatibilityScore: number;
-  matchTier: string;
-  sharedInterests: any;
-  isRevealed: boolean;
-  isMutualInterest: boolean;
+  firstName: string;
+  lastName: string;
+  program: string;
+  yearLevel: number;
+  profilePhotoUrl: string | null;
+  bio: string | null;
+  gender: string;
 }
 
 export default function MatchesPage() {
   const { user, loading: authLoading } = useAuthState();
   const router = useRouter();
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   const fetcher = async () => {
-    const response = await api.getMatches();
+    const response = await api.getPotentialMatches();
     return response.data || [];
   };
 
-  // Always fetch matches - no authentication required
-  const { data: matches = [], isLoading: matchesLoading, mutate: mutateMatches } = useSWR(
-    '/api/matches',
+  // Fetch potential matches (Tinder-style)
+  const { data: potentialMatches = [], isLoading: matchesLoading, mutate: mutateMatches } = useSWR(
+    '/api/matches/potential',
     fetcher
   );
 
-  // Removed authentication restrictions - matches page is now accessible to all
-  // useEffect(() => {
-  //   if (!authLoading && !user) {
-  //     router.push('/auth/login');
-  //     return;
-  //   }
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+      return;
+    }
 
-  //   if (user && !user.surveyCompleted) {
-  //     router.push('/survey');
-  //     return;
-  //   }
-  // }, [user, authLoading, router]);
+    if (user && !user.surveyCompleted) {
+      router.push('/survey');
+      return;
+    }
+  }, [user, authLoading, router]);
 
-  async function handleReveal(matchId: string) {
-    // Optimistic update
-    const updatedMatches = matches.map(m =>
-      m.id === matchId ? { ...m, isRevealed: true } : m
-    );
-
-    // Mutate and disable revalidation initially
-    mutateMatches(updatedMatches, false);
-
+  async function handlePass(userId: string) {
     try {
-      await api.revealMatch(matchId);
-      // Trigger full revalidation from server to be safe
+      await api.passUser(userId);
+      toast.success('Pass recorded');
       mutateMatches();
-    } catch (error) {
-      console.error('Failed to reveal match:', error);
-      // Rollback on error
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to record pass');
+    }
+  }
+
+  async function handleInterest(userId: string) {
+    try {
+      const result = await api.interestUser(userId);
+      if (result.matched) {
+        toast.success('🎉 It\'s a match! You both like each other!', {
+          duration: 5000,
+          action: {
+            label: 'View Matches',
+            onClick: () => mutateMatches(),
+          },
+        });
+      } else {
+        toast.success('Interest recorded! Waiting for them to respond.');
+      }
       mutateMatches();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to record interest');
     }
   }
 
   const loading = authLoading || matchesLoading;
 
-  if (authLoading || matchesLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-retro-cream">
         <Header />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="w-16 h-16 border-4 border-navy border-t-cardinal-red rounded-full animate-spin"></div>
-            <p className="font-pixel text-navy animate-pulse">Consulting the Crystal Ball...</p>
+            <p className="font-pixel text-navy animate-pulse">Loading Wizards...</p>
           </div>
         </div>
       </div>
@@ -114,17 +116,17 @@ export default function MatchesPage() {
         >
           <div className="inline-block mb-4 relative">
             <h1 className="font-display font-black text-5xl md:text-6xl text-navy relative z-10">
-              YOUR MATCHES
+              DISCOVER WIZARDS
             </h1>
             <div className="absolute -bottom-2 -right-2 w-full h-full bg-retro-yellow -z-0"></div>
           </div>
 
           <p className="font-body text-xl text-navy/80 max-w-2xl mx-auto mt-4">
-            The stars have aligned! Here are the {matches.length} Wizards most compatible with your magical aura.
+            Browse through {potentialMatches.length} potential matches. Click ✔ if interested, X to pass.
           </p>
         </motion.div>
 
-        {matches.length === 0 ? (
+        {potentialMatches.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -135,46 +137,61 @@ export default function MatchesPage() {
                 <Lock className="w-10 h-10 text-navy" />
               </div>
               <h2 className="font-pixel text-2xl text-navy mb-4">
-                MATCHES LOCKED
+                NO MORE WIZARDS
               </h2>
               <div className="bg-retro-sky/10 border-2 border-retro-sky p-4 mb-6 rounded">
                 <p className="font-body text-lg text-navy">
-                  Our matchmakers are still brewing the potions.
+                  You've seen all available Wizards for now!
                   <br />
-                  <strong>Check back on Valentine's Day!</strong>
+                  <strong>Check back soon for new magic!</strong>
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 text-sm text-navy/60 font-pixel">
                 <Flower2 className="w-4 h-4" />
-                BLOOMING IN PROGRESS
+                MORE COMING SOON
               </div>
             </div>
           </motion.div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-            {matches.map((match, index) => (
-              <motion.div
-                key={match.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.05,
-                  ease: "easeOut"
-                }}
-              >
-                <MatchCard
-                  match={match}
-                  onReveal={() => handleReveal(match.id)}
-                  onClick={() => setSelectedMatch(match)}
-                />
-              </motion.div>
-            ))}
+            {potentialMatches.map((potentialMatch, index) => {
+              // Convert potential match to match format
+              const match = {
+                id: potentialMatch.id,
+                matchedUser: potentialMatch,
+                compatibilityScore: 0,
+                matchTier: 'pending',
+                isRevealed: false,
+                isMutualInterest: false,
+              };
+
+              return (
+                <motion.div
+                  key={potentialMatch.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                    ease: "easeOut"
+                  }}
+                >
+                  <MatchCard
+                    match={match}
+                    onReveal={() => {}}
+                    onClick={() => {}}
+                    onPass={() => handlePass(potentialMatch.id)}
+                    onInterest={() => handleInterest(potentialMatch.id)}
+                    showActions={true}
+                  />
+                </motion.div>
+              );
+            })}
           </div>
         )}
 
         {/* Motivational Message */}
-        {matches.length > 0 && (
+        {potentialMatches.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -184,20 +201,15 @@ export default function MatchesPage() {
             <div className="inline-flex items-center gap-3 bg-white border-3 border-navy rounded-full px-8 py-3 shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-default">
               <Heart className="w-5 h-5 text-cardinal-red fill-current animate-pulse" />
               <span className="font-pixel text-lg text-navy">
-                TRUST THE MAGIC
+                FIND YOUR MAGIC
               </span>
             </div>
           </motion.div>
         )}
       </main>
-
-      {/* Match Detail Modal */}
-      <AnimatePresence>
-        {selectedMatch && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+    </div>
+  );
+}
             onClick={() => setSelectedMatch(null)}
             className="fixed inset-0 bg-navy/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
           >

@@ -117,6 +117,12 @@ class ApiClient {
   }
 
   // Match endpoints
+  async getPotentialMatches() {
+    return this.get<{ success: boolean; data: any[]; count: number }>(
+      '/api/matches/potential'
+    );
+  }
+
   async getMatches() {
     return this.get<{ success: boolean; data: any[]; count: number }>(
       '/api/matches'
@@ -133,6 +139,19 @@ class ApiClient {
 
   async markInterest(matchId: string, interested: boolean) {
     return this.post(`/api/matches/${matchId}/interest`, { interested });
+  }
+
+  // NEW: Tinder-style matching
+  async passUser(targetUserId: string) {
+    return this.post<{ success: boolean; message: string }>(
+      `/api/matches/pass/${targetUserId}`
+    );
+  }
+
+  async interestUser(targetUserId: string) {
+    return this.post<{ success: boolean; message: string; matched?: boolean; matchId?: string }>(
+      `/api/matches/interest/${targetUserId}`
+    );
   }
 
   // Analytics endpoints
