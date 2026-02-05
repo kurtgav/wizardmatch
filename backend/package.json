@@ -7,7 +7,6 @@
     "dev": "go run cmd/api/main.go",
     "dev:node": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "vercel-build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
