@@ -52,29 +52,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const response = await api.getSession();
             if (response.success && response.data) {
                 setUser(response.data);
-            } else {
-                // If backend doesn't have the user, create from Supabase user
-                const { data: { user: supabaseUser } } = await supabase().auth.getUser();
-
-                if (supabaseUser) {
-                    // Create a basic user object from Supabase user
-                    // Note: We need to satisfy the User interface from types/user.ts
-                    const basicUser: User = {
-                        id: supabaseUser.id,
-                        email: supabaseUser.email!,
-                        firstName: supabaseUser.user_metadata?.first_name || '',
-                        lastName: supabaseUser.user_metadata?.last_name || '',
-                        studentId: '',
-                        program: '',
-                        yearLevel: 1,
-                        gender: '',
-                        surveyCompleted: false,
-                    };
-                    setUser(basicUser);
-                }
+                return;
             }
         } catch (error) {
-            console.error('Failed to fetch user profile:', error);
+            console.error('Failed to fetch user profile from API, falling back to Supabase session:', error);
+        }
+
+        // Fallback: Create basic user from Supabase session
+        // This runs if API fails or returns no data
+        try {
+            const { data: { user: supabaseUser } } = await supabase().auth.getUser();
+
+            if (supabaseUser) {
+                const basicUser: User = {
+                    id: supabaseUser.id,
+                    email: supabaseUser.email!,
+                    firstName: supabaseUser.user_metadata?.first_name || '',
+                    lastName: supabaseUser.user_metadata?.last_name || '',
+                    studentId: '',
+                    program: '',
+                    yearLevel: 1,
+                    gender: '',
+                    surveyCompleted: false,
+                };
+                setUser(basicUser);
+            }
+        } catch (fallbackError) {
+            console.error('Critical: Failed to recover session from Supabase:', fallbackError);
+            setUser(null);
         } finally {
             setLoading(false);
         }

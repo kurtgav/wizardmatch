@@ -4,12 +4,8 @@ const API_URL = ENV_API_URL.endsWith('/api') ? ENV_API_URL.slice(0, -4) : ENV_AP
 // Helper function to get auth token from Supabase
 async function getAuthToken(): Promise<string | null> {
   if (typeof window !== 'undefined') {
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    const { data: { session } } = await supabase.auth.getSession();
+    const { supabase } = await import('@/lib/supabase');
+    const { data: { session } } = await supabase().auth.getSession();
     return session?.access_token || null;
   }
   return null;
