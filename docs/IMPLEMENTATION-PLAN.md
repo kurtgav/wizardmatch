@@ -17,6 +17,7 @@ Complete implementation of the Wizard Match Valentine's 2026 campaign following 
 
 #### Campaigns Table
 ```sql
+-- backend-go/migrations/003_campaigns.sql
 CREATE TABLE campaigns (
     id UUID PRIMARY KEY,
     name VARCHAR(255),
@@ -89,8 +90,8 @@ CREATE TABLE messages (
 - `PUT /api/campaigns/:id` - Update campaign (admin)
 - `GET /api/campaigns/:id/stats` - Campaign statistics
 
-#### Implementation: `backend/src/controllers/campaign.controller.ts`
-```typescript
+#### Implementation: `backend-go/internal/handler/campaign.go`
+```go
 - Get active campaign with date checks
 - Validate user actions based on campaign dates
 - Handle profile update period (Feb 11-13)
@@ -104,8 +105,8 @@ CREATE TABLE messages (
 - `GET /api/crush-list` - Get user's crush list
 - `PUT /api/crush-list` - Update crush list (before Feb 10)
 
-#### Implementation: `backend/src/controllers/crush.controller.ts`
-```typescript
+#### Implementation: `backend-go/internal/handler/crush.go`
+```go
 - Validate crush list (max 10 entries)
 - Look up crush emails by Google account email
 - Mark mutual crushes when both parties list each other
@@ -114,7 +115,7 @@ CREATE TABLE messages (
 
 ### 2.3 Enhanced Matching Algorithm
 
-#### New Service: `backend/src/services/matching.service.ts` (Enhanced)
+#### New Service: `backend-go/internal/service/matching/matching.go` (Enhanced)
 
 **Key Changes:**
 1. **Preference Pool Filtering**
@@ -150,8 +151,8 @@ CREATE TABLE messages (
 - `PUT /api/messages/read` - Mark messages as read
 - `GET /api/messages/unread-count/:userId` - Get unread count
 
-#### Implementation: `backend/src/controllers/message.controller.ts`
-```typescript
+#### Implementation: `backend-go/internal/handler/message.go`
+```go
 - Only allow messaging during profile update period (Feb 11-13)
 - Validate both users are matched
 - Real-time message delivery (WebSocket or polling)
@@ -497,7 +498,7 @@ Complete your survey by February 10 to find out! 💕
 
 ### 8.2 Deployment Checklist
 
-- [ ] Database migrations run successfully
+- [ ] Database migrations run successfully (Goose)
 - [ ] Environment variables configured
 - [ ] Email templates loaded
 - [ ] Campaign created with correct dates
@@ -511,7 +512,7 @@ Complete your survey by February 10 to find out! 💕
 ## Implementation Order
 
 ### Priority 1: Foundation (Week 1)
-1. Database schema updates (Prisma migrations)
+1. Database schema updates (Goose migrations)
 2. Campaign model and basic API
 3. Crush list model and API
 4. Messages model and API

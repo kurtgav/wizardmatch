@@ -65,6 +65,43 @@ export async function getCampaignStats(campaignId: string) {
   return response.json();
 }
 
+export async function createCampaign(data: any) {
+  const response = await fetchAPI(`${API_URL}/campaigns`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to create campaign');
+  return response.json();
+}
+
+export async function updateCampaign(id: string, data: any) {
+  const response = await fetchAPI(`${API_URL}/campaigns/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to update campaign');
+  return response.json();
+}
+
+export async function deleteCampaign(id: string) {
+  const response = await fetchAPI(`${API_URL}/campaigns/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Failed to delete campaign');
+  return response.json();
+}
+
+export async function updateCampaignStats(id: string, data: any) {
+  // Note: This endpoint might not exist in backend handlers yet as public API, usually internal.
+  // But checking campaigns.sql it has UpdateCampaignStats.
+  // Handlers didn't expose it explicitly, but `UpdateCampaign` can update config/etc.
+  // Real stats update usually happens via internal triggers or matching service.
+  // I'll leave this out or implement if needed. For now the UI uses getCampaignStats which is read-only.
+  // The previous code in AdminCampaignsPage calls loadStats -> getCampaignStats.
+  // It doesn't call updateCampaignStats.
+  return Promise.resolve();
+}
+
 export async function checkActionAllowed(action: string) {
   const response = await fetchAPI(`${API_URL}/campaigns/active/check-action/${action}`);
   if (!response.ok) throw new Error('Failed to check action permission');
