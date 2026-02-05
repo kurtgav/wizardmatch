@@ -1,0 +1,16 @@
+# Exclude backend from frontend deployment
+backend
+backend-go
+scripts
+
+# Exclude development files
+.env.local
+.env.development
+*.log
+.DS_Store
+
+# Exclude documentation
+*.md
+docs
+.github
+.agent

@@ -270,7 +270,7 @@ export default function MatchesDashboardPage() {
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-white border-2 border-navy overflow-hidden">
                                             {selectedUser1.profilePhotoUrl ? (
-                                                <img src={selectedUser1.profilePhotoUrl} className="w-full h-full object-cover" />
+                                                <img src={selectedUser1.profilePhotoUrl} alt={`${selectedUser1.firstName} ${selectedUser1.lastName}`} className="w-full h-full object-cover" />
                                             ) : <Users className="w-full h-full p-2 text-navy/20" />}
                                         </div>
                                         <div>
@@ -300,7 +300,7 @@ export default function MatchesDashboardPage() {
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 bg-white border-2 border-navy overflow-hidden">
                                             {selectedUser2.profilePhotoUrl ? (
-                                                <img src={selectedUser2.profilePhotoUrl} className="w-full h-full object-cover" />
+                                                <img src={selectedUser2.profilePhotoUrl} alt={`${selectedUser2.firstName} ${selectedUser2.lastName}`} className="w-full h-full object-cover" />
                                             ) : <Users className="w-full h-full p-2 text-navy/20" />}
                                         </div>
                                         <div>
@@ -368,7 +368,7 @@ export default function MatchesDashboardPage() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 flex-shrink-0 bg-retro-cream border-2 border-navy overflow-hidden">
-                                                {u.profilePhotoUrl ? <img src={u.profilePhotoUrl} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-navy/20" />}
+                                                {u.profilePhotoUrl ? <img src={u.profilePhotoUrl} alt={`${u.firstName} ${u.lastName}`} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-navy/20" />}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-display font-bold text-navy text-sm truncate">{u.firstName} {u.lastName}</p>
@@ -405,7 +405,7 @@ export default function MatchesDashboardPage() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 flex-shrink-0 bg-retro-cream border-2 border-navy overflow-hidden">
-                                                {u.profilePhotoUrl ? <img src={u.profilePhotoUrl} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-navy/20" />}
+                                                {u.profilePhotoUrl ? <img src={u.profilePhotoUrl} alt={`${u.firstName} ${u.lastName}`} className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-navy/20" />}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-display font-bold text-navy text-sm truncate">{u.firstName} {u.lastName}</p>
