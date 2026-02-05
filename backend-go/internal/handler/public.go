@@ -96,7 +96,8 @@ func (h *PublicHandler) ListTestimonials(c *gin.Context) {
 
 	testimonials, err := store.ListTestimonials(c)
 	if err != nil {
-		respondError(c, http.StatusInternalServerError, "Failed to load testimonials")
+		// DEBUG: Return actual error
+		respondError(c, http.StatusInternalServerError, "Failed to load testimonials: "+err.Error())
 		return
 	}
 
