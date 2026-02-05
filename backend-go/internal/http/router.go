@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,16 +28,11 @@ func NewRouter(options RouterOptions) *gin.Engine {
 	router.Use(cors.New(cors.Config{
 		AllowOriginFunc: func(origin string) bool {
 			// Allow localhost for development
-			if origin == "http://localhost:3000" ||
-				origin == "http://127.0.0.1:3000" ||
-				origin == "http://0.0.0.0:3000" {
+			if strings.HasPrefix(origin, "http://localhost") || strings.HasPrefix(origin, "http://127.0.0.1") {
 				return true
 			}
 			// Allow all Vercel deployments (production and previews)
-			if len(origin) > 0 && (origin == "https://wizardmatch.vercel.app" ||
-				origin == "https://wizardmatch-frontend.vercel.app" ||
-				// Support Vercel preview URLs
-				(len(origin) > 11 && origin[len(origin)-11:] == ".vercel.app")) {
+			if strings.HasSuffix(origin, ".vercel.app") {
 				return true
 			}
 			// Allow the configured frontend URL
@@ -55,6 +51,7 @@ func NewRouter(options RouterOptions) *gin.Engine {
 			"status":      "ok",
 			"timestamp":   "now",
 			"environment": gin.Mode(),
+			"version":     "v2.1-cors-fix",
 		})
 	})
 
