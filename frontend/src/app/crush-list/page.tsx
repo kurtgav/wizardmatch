@@ -118,7 +118,7 @@ export default function CrushListPage() {
           <CrushListForm
             onSubmit={handleSubmit}
             existingCrushes={existingCrushes}
-            maxCrushes={2}
+            maxCrushes={10}
           />
         </div>
       </main>

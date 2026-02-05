@@ -39,8 +39,8 @@ func (h *CrushHandler) SubmitCrushList(c *gin.Context) {
 		respondError(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
-	if len(req.Crushes) > 2 {
-		respondError(c, http.StatusBadRequest, "Maximum 2 crushes allowed")
+	if len(req.Crushes) > 10 {
+		respondError(c, http.StatusBadRequest, "Maximum 10 crushes allowed")
 		return
 	}
 
@@ -146,7 +146,7 @@ func (h *CrushHandler) GetCrushList(c *gin.Context) {
 	}
 
 	campaign, err := store.GetActiveCampaign(c)
-	if (err != nil) {
+	if err != nil {
 		respondError(c, http.StatusBadRequest, "No active campaign: "+err.Error())
 		return
 	}
@@ -155,7 +155,7 @@ func (h *CrushHandler) GetCrushList(c *gin.Context) {
 		UserID:     userUUID,
 		CampaignID: campaign.ID,
 	})
-	if (err != nil) {
+	if err != nil {
 		respondError(c, http.StatusInternalServerError, "Failed to load crush list: "+err.Error())
 		return
 	}
