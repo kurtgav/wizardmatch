@@ -40,7 +40,7 @@ export const analyticsController = {
         totalMatches,
         mutualMatches,
         averageCompatibilityScore: Number(avgScoreResult._avg.compatibilityScore || 0),
-        topPrograms: topPrograms.map(p => ({
+        topPrograms: topPrograms.map((p: any) => ({
           program: p.program,
           count: p._count.program,
         })),
@@ -87,7 +87,7 @@ export const analyticsController = {
 
     // Include survey completion by program
     const programStatsWithCompletion = await Promise.all(
-      programStats.map(async (stat) => {
+      programStats.map(async (stat: any) => {
         const completed = await prisma.user.count({
           where: {
             program: stat.program,
@@ -120,7 +120,7 @@ export const analyticsController = {
 
     // Include survey completion by year level
     const yearStatsWithCompletion = await Promise.all(
-      yearStats.map(async (stat) => {
+      yearStats.map(async (stat: any) => {
         const completed = await prisma.user.count({
           where: {
             yearLevel: stat.yearLevel,
@@ -167,7 +167,7 @@ export const analyticsController = {
         revealedMatches,
         mutualMatchRate: totalMatches > 0 ? (mutualMatches / totalMatches) * 100 : 0,
         revealRate: totalMatches > 0 ? (revealedMatches / totalMatches) * 100 : 0,
-        matchesByTier: matchesByTier.map(m => ({
+        matchesByTier: matchesByTier.map((m: any) => ({
           tier: m.matchTier,
           count: m._count.matchTier,
         })),
