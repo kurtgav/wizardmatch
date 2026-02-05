@@ -92,8 +92,31 @@ class ApiClient {
   }
 
   // Survey endpoints
+  private questionsCache: any = null;
+  private questionsPromise: Promise<{ success: boolean; data: any }> | null = null;
+
   async getQuestions() {
-    return this.get<{ success: boolean; data: any }>('/api/survey/questions');
+    if (this.questionsCache) return { success: true, data: this.questionsCache };
+    if (this.questionsPromise) return this.questionsPromise;
+
+    this.questionsPromise = this.get<{ success: boolean; data: any }>('/api/survey/questions')
+      .then(res => {
+        if (res.success) {
+          this.questionsCache = res.data;
+        }
+        this.questionsPromise = null;
+        return res;
+      })
+      .catch(err => {
+        this.questionsPromise = null;
+        throw err;
+      });
+
+    return this.questionsPromise;
+  }
+
+  prefetchQuestions() {
+    this.getQuestions().catch(() => { });
   }
 
   async submitResponse(data: any) {

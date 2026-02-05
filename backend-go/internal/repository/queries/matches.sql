@@ -11,6 +11,7 @@ UPDATE matches SET is_revealed = TRUE, revealed_at = NOW() WHERE id = $1 RETURNI
 UPDATE matches
 SET
     is_mutual_interest = $2,
+    messaging_unlocked = $3,
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;

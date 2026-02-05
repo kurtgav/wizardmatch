@@ -50,6 +50,12 @@ export default function HomePage() {
     }
 
     loadData();
+
+    const intervalId = setInterval(loadData, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Target Valentine's Day 2026

@@ -39,8 +39,8 @@ func (h *CrushHandler) SubmitCrushList(c *gin.Context) {
 		respondError(c, http.StatusBadRequest, "Invalid request")
 		return
 	}
-	if len(req.Crushes) > 10 {
-		respondError(c, http.StatusBadRequest, "Maximum 10 crushes allowed")
+	if len(req.Crushes) > 2 {
+		respondError(c, http.StatusBadRequest, "Maximum 2 crushes allowed")
 		return
 	}
 

@@ -33,7 +33,7 @@ func main() {
 	router := internalhttp.NewRouter(internalhttp.RouterOptions{
 		FrontendURL:        cfg.FrontendURL,
 		JwtSecret:          cfg.JwtSecret,
-		AdminEmails:        []string{cfg.AdminEmail, "kurtgavin.design@gmail.com", "admin@wizardmatch.ai"},
+		AdminEmails:        []string{"kurtgavin.design@gmail.com", "nicolemaaba@gmail.com", "Agpfrancisco1@gmail.com"},
 		GoogleClientID:     cfg.GoogleClientID,
 		GoogleClientSecret: cfg.GoogleClientSecret,
 		GoogleRedirectURL:  cfg.GoogleRedirectURL,

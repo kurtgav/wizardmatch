@@ -1,5 +1,8 @@
 -- name: ListQuestions :many
-SELECT * FROM questions WHERE is_active = TRUE ORDER BY order_index ASC;
+SELECT * FROM questions
+WHERE campaign_id = (SELECT id FROM campaigns WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 1)
+  AND is_active = TRUE
+ORDER BY order_index ASC;
 
 -- name: GetQuestionByID :one
 SELECT * FROM questions WHERE id = $1 LIMIT 1;

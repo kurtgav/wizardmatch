@@ -53,6 +53,7 @@ func NewRouter(options RouterOptions) *gin.Engine {
 		GoogleClientID:     options.GoogleClientID,
 		GoogleClientSecret: options.GoogleClientSecret,
 		GoogleRedirectURL:  options.GoogleRedirectURL,
+		AdminEmails:        options.AdminEmails,
 	})
 
 	userHandler := handler.NewUserHandler()
@@ -66,7 +67,7 @@ func NewRouter(options RouterOptions) *gin.Engine {
 	publicHandler := handler.NewPublicHandler()
 
 	authMiddleware := middleware.NewAuthMiddleware(options.JwtSecret)
-	adminMiddleware := middleware.NewAdminMiddleware(append(options.AdminEmails, "nicolemaaba@gmail.com", "Agpfrancisco1@gmail.com"))
+	adminMiddleware := middleware.NewAdminMiddleware(options.AdminEmails)
 
 	api := router.Group("/api")
 	{

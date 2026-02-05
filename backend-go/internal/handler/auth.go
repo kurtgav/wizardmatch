@@ -24,6 +24,7 @@ type AuthHandlerOptions struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURL  string
+	AdminEmails        []string
 }
 
 type AuthHandler struct {
@@ -33,6 +34,7 @@ type AuthHandler struct {
 	googleClientID     string
 	googleClientSecret string
 	googleRedirectURL  string
+	adminEmails        map[string]struct{}
 }
 
 type googleUser struct {
@@ -43,6 +45,14 @@ type googleUser struct {
 }
 
 func NewAuthHandler(options AuthHandlerOptions) *AuthHandler {
+	adminSet := make(map[string]struct{}, len(options.AdminEmails))
+	for _, email := range options.AdminEmails {
+		normalized := strings.TrimSpace(strings.ToLower(email))
+		if normalized != "" {
+			adminSet[normalized] = struct{}{}
+		}
+	}
+
 	return &AuthHandler{
 		jwtSecret:          []byte(options.JwtSecret),
 		frontendURL:        options.FrontendURL,
@@ -50,6 +60,7 @@ func NewAuthHandler(options AuthHandlerOptions) *AuthHandler {
 		googleClientID:     options.GoogleClientID,
 		googleClientSecret: options.GoogleClientSecret,
 		googleRedirectURL:  options.GoogleRedirectURL,
+		adminEmails:        adminSet,
 	}
 }
 
@@ -159,6 +170,8 @@ func (h *AuthHandler) GetSession(c *gin.Context) {
 		return
 	}
 
+	_, isAdmin := h.adminEmails[strings.ToLower(user.Email)]
+
 	respondJSON(c, http.StatusOK, gin.H{
 		"success": true,
 		"data": gin.H{
@@ -171,6 +184,7 @@ func (h *AuthHandler) GetSession(c *gin.Context) {
 			"surveyCompleted": user.SurveyCompleted,
 			"profilePhotoUrl": textValue(user.ProfilePhotoUrl),
 			"bio":             textValue(user.Bio),
+			"isAdmin":         isAdmin,
 		},
 	})
 }

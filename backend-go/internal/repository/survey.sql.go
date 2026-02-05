@@ -91,7 +91,10 @@ func (q *Queries) GetQuestionByID(ctx context.Context, id uuid.UUID) (Question, 
 }
 
 const listQuestions = `-- name: ListQuestions :many
-SELECT id, campaign_id, category, question_text, question_type, options, weight, is_active, order_index, created_at FROM questions WHERE is_active = TRUE ORDER BY order_index ASC
+SELECT id, campaign_id, category, question_text, question_type, options, weight, is_active, order_index, created_at FROM questions
+WHERE campaign_id = (SELECT id FROM campaigns WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 1)
+  AND is_active = TRUE
+ORDER BY order_index ASC
 `
 
 func (q *Queries) ListQuestions(ctx context.Context) ([]Question, error) {

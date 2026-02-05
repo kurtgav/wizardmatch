@@ -7,6 +7,7 @@ import { Heart, Flower2, Wand2, Ghost, Shield, AlertCircle, ArrowRight } from 'l
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 
 function LoginContent() {
   const router = useRouter();
@@ -18,6 +19,7 @@ function LoginContent() {
   useEffect(() => {
     // Redirect if already logged in
     if (!authLoading && user) {
+      api.prefetchQuestions();
       router.push('/survey');
       return;
     }

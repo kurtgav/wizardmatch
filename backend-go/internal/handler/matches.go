@@ -285,8 +285,9 @@ func (h *MatchHandler) MarkInterest(c *gin.Context) {
 		})
 		if err == nil && other.ID != uuid.Nil {
 			_, _ = store.UpdateMatchInterest(c, repository.UpdateMatchInterestParams{
-				ID:               matchUUID,
-				IsMutualInterest: true,
+				ID:                matchUUID,
+				IsMutualInterest:  true,
+				MessagingUnlocked: true,
 			})
 			respondJSON(c, http.StatusOK, gin.H{
 				"success": true,
@@ -537,8 +538,9 @@ func (h *MatchHandler) InterestUser(c *gin.Context) {
 	})
 	if err == nil && other.ID != uuid.Nil {
 		_, _ = store.UpdateMatchInterest(c, repository.UpdateMatchInterestParams{
-			ID:               match.ID,
-			IsMutualInterest: true,
+			ID:                match.ID,
+			IsMutualInterest:  true,
+			MessagingUnlocked: true,
 		})
 		respondJSON(c, http.StatusOK, gin.H{
 			"success":          true,

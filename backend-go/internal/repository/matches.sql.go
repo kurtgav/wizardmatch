@@ -112,18 +112,20 @@ const updateMatchInterest = `-- name: UpdateMatchInterest :one
 UPDATE matches
 SET
     is_mutual_interest = $2,
+    messaging_unlocked = $3,
     updated_at = NOW()
 WHERE id = $1
 RETURNING id, campaign_id, user1_id, user2_id, compatibility_score, match_tier, shared_interests, rank_for_user1, rank_for_user2, is_revealed, is_mutual_interest, is_mutual_crush, messaging_unlocked, created_at, revealed_at, updated_at
 `
 
 type UpdateMatchInterestParams struct {
-	ID               uuid.UUID `json:"id"`
-	IsMutualInterest bool      `json:"is_mutual_interest"`
+	ID                uuid.UUID `json:"id"`
+	IsMutualInterest  bool      `json:"is_mutual_interest"`
+	MessagingUnlocked bool      `json:"messaging_unlocked"`
 }
 
 func (q *Queries) UpdateMatchInterest(ctx context.Context, arg UpdateMatchInterestParams) (Match, error) {
-	row := q.db.QueryRow(ctx, updateMatchInterest, arg.ID, arg.IsMutualInterest)
+	row := q.db.QueryRow(ctx, updateMatchInterest, arg.ID, arg.IsMutualInterest, arg.MessagingUnlocked)
 	var i Match
 	err := row.Scan(
 		&i.ID,
