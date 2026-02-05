@@ -30,7 +30,22 @@ func Load() (Config, error) {
 	viper.SetDefault("SERVER_PORT", "3001")
 	viper.SetDefault("ACCESS_TOKEN_TTL", "24h")
 	viper.SetDefault("ENABLE_DEV_LOGIN", true)
+	viper.SetDefault("ENV", "development")
+	viper.SetDefault("SERVER_PORT", "3001")
+	viper.SetDefault("ACCESS_TOKEN_TTL", "24h")
+	viper.SetDefault("ENABLE_DEV_LOGIN", true)
 	viper.SetDefault("ADMIN_EMAIL", "admin@wizardmatch.ai")
+
+	// Explicitly bind environment variables
+	_ = viper.BindEnv("ENV")
+	_ = viper.BindEnv("SERVER_PORT")
+	_ = viper.BindEnv("DATABASE_URL")
+	_ = viper.BindEnv("JWT_SECRET")
+	_ = viper.BindEnv("FRONTEND_URL")
+	_ = viper.BindEnv("ADMIN_EMAIL")
+	_ = viper.BindEnv("GOOGLE_CLIENT_ID")
+	_ = viper.BindEnv("GOOGLE_CLIENT_SECRET")
+	_ = viper.BindEnv("GOOGLE_REDIRECT_URL")
 
 	_ = viper.ReadInConfig()
 
