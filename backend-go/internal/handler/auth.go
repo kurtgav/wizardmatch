@@ -81,7 +81,7 @@ func (h *AuthHandler) GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	tokenResp, err := h.exchangeGoogleToken(code, c)
+	tokenResp, err := h.exchangeGoogleToken(code)
 	if err != nil {
 		c.Redirect(http.StatusFound, h.frontendURL+"/auth/login?error=auth_failed")
 		return
@@ -229,7 +229,7 @@ type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
-func (h *AuthHandler) exchangeGoogleToken(code string, c *gin.Context) (*tokenResponse, error) {
+func (h *AuthHandler) exchangeGoogleToken(code string) (*tokenResponse, error) {
 	tokenEndpoint := "https://oauth2.googleapis.com/token"
 	values := url.Values{}
 	values.Set("code", code)
