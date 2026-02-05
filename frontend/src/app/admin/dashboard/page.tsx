@@ -35,9 +35,15 @@ export default function AdminDashboardPage() {
       return;
     }
 
+    // Debug logging
+    console.log('Admin check - User email:', user?.email);
+    console.log('Admin check - User object:', user);
+    console.log('Admin check - ADMIN_EMAILS:', ADMIN_EMAILS);
+    console.log('Admin check - Is admin:', user && ADMIN_EMAILS.includes(user.email));
+
     // Check if user is admin
     if (user && !ADMIN_EMAILS.includes(user.email)) {
-      setError('Access denied. Admin privileges required.');
+      setError(`Access denied. Your email (${user.email}) is not in the admin list.`);
       setLoading(false);
       return;
     }
