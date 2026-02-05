@@ -11,43 +11,63 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Wait for Supabase to process the OAuth callback from URL
-        // The URL contains access_token and refresh_token parameters
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Get tokens from URL parameters
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        const error = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
 
-        // Now get the session - Supabase should have processed the tokens
-        const { data: sessionData, error: sessionError } = await supabase().auth.getSession();
-
-        if (sessionError) {
-          console.error('Auth callback error:', sessionError);
-          router.push('/auth/login?error=' + encodeURIComponent(sessionError.message));
+        // Check for errors first
+        if (error) {
+          console.error('OAuth error:', error, errorDescription);
+          router.push('/auth/login?error=' + encodeURIComponent(errorDescription || error));
           return;
         }
 
-        if (sessionData.session) {
-          // Successfully authenticated!
-          const userId = sessionData.session.user.id;
+        // If we have tokens, set the session
+        if (accessToken && refreshToken) {
+          const { data: sessionData, error: sessionError } = await supabase().auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
 
-          // Check if user has completed survey
-          const { data: userData, error: userError } = await supabase()
-            .from('users')
-            .select('surveyCompleted')
-            .eq('id', userId)
-            .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors if user doesn't exist
-
-          if (userData?.surveyCompleted) {
-            router.push('/matches');
-          } else {
-            router.push('/survey');
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+            router.push('/auth/login?error=' + encodeURIComponent(sessionError.message));
+            return;
           }
-        } else {
-          // No session found - check if there's an error in the URL
-          const error = searchParams.get('error');
-          const errorDescription = searchParams.get('error_description');
 
-          console.error('No session after callback', { error, errorDescription });
-          router.push('/auth/login?error=' + encodeURIComponent(errorDescription || 'Authentication failed'));
+          if (sessionData.session) {
+            // Successfully authenticated!
+            const userId = sessionData.session.user.id;
+
+            // Check if user has completed survey
+            const { data: userData } = await supabase()
+              .from('users')
+              .select('surveyCompleted')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (userData?.surveyCompleted) {
+              router.push('/matches');
+            } else {
+              router.push('/survey');
+            }
+            return;
+          }
         }
+
+        // If no tokens in URL, check current session
+        const { data: existingSession } = await supabase().auth.getSession();
+        if (existingSession.session) {
+          router.push('/matches');
+          return;
+        }
+
+        // If we get here, something went wrong
+        console.error('No session found after callback');
+        router.push('/auth/login?error=' + encodeURIComponent('Failed to authenticate'));
+
       } catch (err) {
         console.error('Auth callback error:', err);
         router.push('/auth/login?error=' + encodeURIComponent('Authentication failed'));
