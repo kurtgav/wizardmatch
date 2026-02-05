@@ -7,9 +7,9 @@ export const crushService = {
    */
   async submitCrushList(userId: string, campaignId: string, crushes: Array<{ email: string; name?: string }>): Promise<any> {
     try {
-      // Validate max 10 crushes
-      if (crushes.length > 10) {
-        throw new Error('Maximum 10 crushes allowed');
+      // Validate max 2 crushes
+      if (crushes.length > 2) {
+        throw new Error('Maximum 2 crushes allowed');
       }
 
       // Delete existing crushes for this user in this campaign

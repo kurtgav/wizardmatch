@@ -10,7 +10,7 @@ const submitCrushListSchema = z.object({
   crushes: z.array(z.object({
     email: z.string().email(),
     name: z.string().optional(),
-  })).max(10, 'Maximum 10 crushes allowed'),
+  })).max(2, 'Maximum 2 crushes allowed'),
 });
 
 export const crushController = {
