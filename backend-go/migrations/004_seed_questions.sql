@@ -2,6 +2,8 @@
 -- +goose StatementBegin
 
 -- Clear existing questions to avoid duplicates/conflicts during seed
+-- Must clear dependent tables first due to foreign keys
+DELETE FROM survey_responses;
 DELETE FROM questions;
 
 -- Demographics
