@@ -1,8 +1,8 @@
-import { Request, Response } from '@vercel/node';
-import app from '../src/app';
-
 // Vercel serverless function handler
-export default async (req: Request, res: Response) => {
+// Import the compiled Express app from dist folder
+const app = require('../dist/app').default;
+
+module.exports = async (req, res) => {
   // Log the incoming request for debugging
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
 
