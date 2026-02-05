@@ -4,14 +4,6 @@ import { supabase } from '../config/supabase.config';
 import { prisma } from '../config/db.config';
 import { logger } from '../utils/logger';
 
-// Define a custom request type with our user shape
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-  };
-}
-
 export async function authenticate(
   req: Request,
   _res: Response,
@@ -34,14 +26,9 @@ export async function authenticate(
       throw createError('Invalid or expired token', 401);
     }
 
-    // Get user from our database
+    // Get full user from our database
     const dbUser = await prisma.user.findUnique({
       where: { email: user.email },
-      select: {
-        id: true,
-        email: true,
-        isActive: true,
-      },
     });
 
     // If user doesn't exist in our database, create them
@@ -58,24 +45,13 @@ export async function authenticate(
           program: 'Undeclared',
           yearLevel: 1,
         },
-        select: {
-          id: true,
-          email: true,
-          isActive: true,
-        },
       });
 
-      req.user = {
-        id: newUser.id,
-        email: newUser.email,
-      };
+      req.user = newUser;
     } else if (!dbUser.isActive) {
       throw createError('User account is inactive', 401);
     } else {
-      req.user = {
-        id: dbUser.id,
-        email: dbUser.email,
-      };
+      req.user = dbUser;
     }
 
     next();
