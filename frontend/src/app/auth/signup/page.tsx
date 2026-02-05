@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Heart, Flower2, Wand2, Ghost, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthState } from '@/hooks/useAuthState';
+import { supabase } from '@/lib/supabase';
 
 function SignupContent() {
     const router = useRouter();
@@ -36,13 +37,42 @@ function SignupContent() {
         if (errorParam) {
             setError('An error occurred during sign up. Please try again.');
         }
+
+        // Handle Supabase OAuth callback
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+            // Supabase will handle the session automatically
+            router.push('/survey');
+        }
     }, [searchParams, user, authLoading, router]);
 
-    const handleGoogleSignup = () => {
+    const handleGoogleSignup = async () => {
         setIsLoading(true);
         setError(null);
-        // Redirect to backend Google OAuth
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
+
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/signup`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                },
+            });
+
+            if (error) throw error;
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (err) {
+            console.error('Signup error:', err);
+            setError('Failed to initiate sign up. Please try again.');
+            setIsLoading(false);
+        }
     };
 
     return (

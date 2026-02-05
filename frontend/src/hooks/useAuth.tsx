@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase, type UserProfile } from '@/lib/supabase';
 import { api } from '@/lib/api';
 
 interface User {
@@ -19,8 +20,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (token: string) => void;
-  logout: () => void;
+  login: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
 }
 
@@ -32,43 +33,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for changes on auth state (sign in, sign out, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  async function checkAuth() {
+  async function fetchUserProfile(userId: string) {
     try {
-      // Check if we have a token in localStorage
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
+      // First try to get user from our backend API
       const response = await api.getSession();
       if (response.success && response.data) {
         setUser(response.data);
       } else {
-        // Invalid token, clear it
-        localStorage.removeItem('token');
+        // If backend doesn't have the user, create from Supabase user
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+
+        if (supabaseUser) {
+          // Create a basic user object from Supabase user
+          const basicUser: User = {
+            id: supabaseUser.id,
+            email: supabaseUser.email!,
+            firstName: supabaseUser.user_metadata?.first_name || '',
+            lastName: supabaseUser.user_metadata?.last_name || '',
+            program: '',
+            yearLevel: 1,
+            surveyCompleted: false,
+          };
+          setUser(basicUser);
+        }
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      // Clear invalid token
-      localStorage.removeItem('token');
+      console.error('Failed to fetch user profile:', error);
     } finally {
       setLoading(false);
     }
   }
 
-  function login(token: string) {
-    // Store token and refresh session
-    localStorage.setItem('token', token);
-    checkAuth();
+  function login() {
+    // Supabase handles login through OAuth
+    // The auth state change listener will handle setting the user
   }
 
-  function logout() {
-    // Clear token and user state
-    localStorage.removeItem('token');
+  async function logout() {
+    await supabase.auth.signOut();
     setUser(null);
     router.push('/auth/login');
   }

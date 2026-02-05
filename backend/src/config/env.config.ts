@@ -11,11 +11,10 @@ interface Config {
   redisUrl: string;
   jwtSecret: string;
   jwtExpiresIn: string;
-  googleClientId: string;
-  googleClientSecret: string;
-  googleCallbackUrl: string;
-  nextAuthUrl: string;
-  nextAuthSecret: string;
+  // Supabase config
+  supabaseUrl: string;
+  supabaseServiceKey: string;
+  // Email config
   emailService: string;
   emailUser: string;
   emailPassword: string;
@@ -28,7 +27,6 @@ interface Config {
   maxFileSize: number;
   uploadDir: string;
   matchReleaseDate: string;
-  allowedDomains: string[];
 }
 
 const config: Config = {
@@ -39,11 +37,10 @@ const config: Config = {
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
   jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-  googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || '',
-  nextAuthUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-  nextAuthSecret: process.env.NEXTAUTH_SECRET || '',
+  // Supabase
+  supabaseUrl: process.env.SUPABASE_URL || '',
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  // Email
   emailService: process.env.EMAIL_SERVICE || 'gmail',
   emailUser: process.env.EMAIL_USER || '',
   emailPassword: process.env.EMAIL_PASSWORD || '',
@@ -56,15 +53,13 @@ const config: Config = {
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880', 10),
   uploadDir: process.env.UPLOAD_DIR || './uploads',
   matchReleaseDate: process.env.MATCH_RELEASE_DATE || new Date().toISOString(),
-  allowedDomains: process.env.ALLOWED_DOMAINS?.split(',') || [],
 };
 
 // Validate required environment variables
 const requiredEnvVars = [
   'DATABASE_URL',
-  'JWT_SECRET',
-  'GOOGLE_CLIENT_ID',
-  'GOOGLE_CLIENT_SECRET',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
 ];
 
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);

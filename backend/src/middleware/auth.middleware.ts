@@ -1,13 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { config } from '../config/env.config';
-import { prisma } from '../config/db.config';
 import { createError } from './error.middleware';
-
-interface JwtPayload {
-  userId: string;
-  email: string;
-}
+import { supabase } from '../config/supabase.config';
+import { prisma } from '../config/db.config';
+import { logger } from '../utils/logger';
 
 // Define a custom request type with our user shape
 export interface AuthenticatedRequest extends Request {
@@ -31,12 +26,17 @@ export async function authenticate(
 
     const token = authHeader.substring(7);
 
-    // Verify JWT
-    const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
+    // Verify Supabase token
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+    if (error || !user || !user.email) {
+      logger.error('Supabase auth verification failed:', error);
+      throw createError('Invalid or expired token', 401);
+    }
+
+    // Get user from our database
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
       select: {
         id: true,
         email: true,
@@ -44,15 +44,39 @@ export async function authenticate(
       },
     });
 
-    if (!user || !user.isActive) {
-      throw createError('User not found or inactive', 401);
-    }
+    // If user doesn't exist in our database, create them
+    if (!dbUser) {
+      const emailLocal = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '');
+      const uniqueId = `${emailLocal.substring(0, 10)}${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Attach user to request
-    req.user = {
-      id: user.id,
-      email: user.email,
-    };
+      const newUser = await prisma.user.create({
+        data: {
+          email: user.email,
+          studentId: uniqueId,
+          firstName: user.user_metadata?.first_name || user.user_metadata?.full_name?.split(' ')[0] || 'Wizard',
+          lastName: user.user_metadata?.last_name || user.user_metadata?.full_name?.split(' ').slice(-1)[0] || 'User',
+          program: 'Undeclared',
+          yearLevel: 1,
+        },
+        select: {
+          id: true,
+          email: true,
+          isActive: true,
+        },
+      });
+
+      req.user = {
+        id: newUser.id,
+        email: newUser.email,
+      };
+    } else if (!dbUser.isActive) {
+      throw createError('User account is inactive', 401);
+    } else {
+      req.user = {
+        id: dbUser.id,
+        email: dbUser.email,
+      };
+    }
 
     next();
   } catch (error) {
@@ -61,13 +85,11 @@ export async function authenticate(
 }
 
 export function requireAdmin(req: Request, _res: Response, next: NextFunction): void {
-  // For now, we'll check if the email is from the admin domain
-  // In production, you should have a proper role-based system
-  const adminEmails = ['kurtgavin.design@gmail.com', 'admin@wizardmatch.ai'];
-
-  if (config.adminEmail && !adminEmails.includes(config.adminEmail)) {
-    adminEmails.push(config.adminEmail);
-  }
+  const adminEmails = [
+    'kurtgavin.design@gmail.com',
+    'admin@wizardmatch.ai',
+    process.env.ADMIN_EMAIL,
+  ].filter(Boolean) as string[];
 
   if (!req.user) {
     return next(createError('Authentication required', 401));

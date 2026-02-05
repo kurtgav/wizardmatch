@@ -19,9 +19,9 @@ const footerLinks = {
 };
 
 const socialLinks = [
-  { href: 'https://instagram.com', icon: Instagram, label: 'Instagram' },
-  { href: 'https://facebook.com', icon: Facebook, label: 'Facebook' },
-  { href: 'mailto:perfectmatch@gmail.com', icon: Mail, label: 'Email' },
+  { href: 'https://www.instagram.com/mapuamcl_ssc/', icon: Instagram, label: 'Instagram' },
+  { href: 'https://https://www.facebook.com/MapuaMCLSSC', icon: Facebook, label: 'Facebook' },
+  { href: 'mailto:ssc@mcl.edu.ph', icon: Mail, label: 'Email' },
 ];
 
 export default function Footer() {

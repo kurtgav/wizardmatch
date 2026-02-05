@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Heart, Flower2, Wand2, Ghost, Shield, AlertCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthState } from '@/hooks/useAuthState';
+import { supabase } from '@/lib/supabase';
 
 function LoginContent() {
   const router = useRouter();
@@ -27,12 +28,6 @@ function LoginContent() {
 
     const errorParam = searchParams.get('error');
     const messageParam = searchParams.get('message');
-    const testMode = searchParams.get('test');
-
-    if (testMode === 'true') {
-      handleDevLogin();
-      return;
-    }
 
     if (messageParam) {
       setError(decodeURIComponent(messageParam));
@@ -41,33 +36,73 @@ function LoginContent() {
 
     if (errorParam) {
       switch (errorParam) {
+        case 'access_denied':
+          setError('Access denied. Please try again.');
+          break;
         case 'auth_failed':
           setError('Authentication failed. Please try again.');
-          break;
-        case 'session_expired':
-          setError('Your session has expired. Please sign in again.');
-          break;
-        case 'invalid_token':
-          setError('Invalid authentication token. Please try again.');
           break;
         default:
           setError('An error occurred. Please try again.');
       }
     }
+
+    // Handle Supabase OAuth callback
+    const accessToken = searchParams.get('access_token');
+    const refreshToken = searchParams.get('refresh_token');
+
+    if (accessToken && refreshToken) {
+      // Supabase will handle the session automatically
+      router.push('/matches');
+    }
   }, [searchParams, user, authLoading, router]);
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
-    // Redirect to backend Google OAuth
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/login`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) throw error;
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Failed to initiate login. Please try again.');
+      setIsLoading(false);
+    }
   };
 
-  const handleDevLogin = () => {
+  const handleEmailLogin = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    // Redirect to dev login bypass
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/dev-login`;
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Session will be automatically handled by Supabase
+      router.push('/matches');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to sign in. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -151,7 +186,7 @@ function LoginContent() {
                   <span className="font-pixel text-xs text-navy">1</span>
                 </div>
                 <p className="font-body text-sm text-navy">
-                  <strong>Any personal Google Account</strong>
+                  <strong>Sign in with Google</strong> or create an account
                 </p>
               </li>
               <li className="flex items-start gap-3">
@@ -205,14 +240,6 @@ function LoginContent() {
               />
             )}
           </motion.button>
-
-          {/* Dev Login Bypass */}
-          <button
-            onClick={handleDevLogin}
-            className="w-full mt-4 text-navy/40 font-pixel text-[10px] hover:text-navy/60 transition-colors uppercase tracking-widest"
-          >
-            [ Development Bypass ]
-          </button>
 
           {/* Link to Signup */}
           <div className="mt-8 text-center mb-4">
