@@ -4,6 +4,7 @@ import { logger } from './utils/logger';
 
 const PORT = config.port;
 
+// For local development
 const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`🚀 Server running on http://0.0.0.0:${PORT}`);
   logger.info(`🌍 Environment: ${config.nodeEnv}`);
@@ -39,4 +40,5 @@ process.on('SIGINT', () => {
   });
 });
 
-export default server;
+// Export the Express app for Vercel
+export default app;
