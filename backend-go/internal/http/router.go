@@ -81,10 +81,13 @@ func NewRouter(options RouterOptions) *gin.Engine {
 		api.GET("/survey/progress", authMiddleware.RequireAuth(), surveyHandler.GetProgress)
 
 		api.GET("/matches", authMiddleware.RequireAuth(), matchHandler.GetMatches)
+		api.GET("/matches/potential", authMiddleware.RequireAuth(), matchHandler.GetPotentialMatches)
 		api.GET("/matches/:matchId", authMiddleware.RequireAuth(), matchHandler.GetMatchById)
 		api.POST("/matches/:matchId/reveal", authMiddleware.RequireAuth(), matchHandler.RevealMatch)
 		api.POST("/matches/:matchId/interest", authMiddleware.RequireAuth(), matchHandler.MarkInterest)
 		api.POST("/matches/:matchId/report", authMiddleware.RequireAuth(), matchHandler.ReportMatch)
+		api.POST("/matches/pass/:targetUserId", authMiddleware.RequireAuth(), matchHandler.PassUser)
+		api.POST("/matches/interest/:targetUserId", authMiddleware.RequireAuth(), matchHandler.InterestUser)
 
 		api.GET("/messages/conversations", authMiddleware.RequireAuth(), messageHandler.GetConversations)
 		api.GET("/messages/unread-count", authMiddleware.RequireAuth(), messageHandler.GetUnreadCount)

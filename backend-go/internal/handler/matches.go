@@ -389,3 +389,167 @@ func interactionType(interested bool) string {
 	}
 	return "not_interested"
 }
+
+func (h *MatchHandler) GetPotentialMatches(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		unauthorized(c)
+		return
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	store := getStore()
+	if store == nil {
+		respondError(c, http.StatusInternalServerError, "store not initialized")
+		return
+	}
+
+	users, err := store.ListPotentialMatches(c, userUUID)
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Failed to load potential matches")
+		return
+	}
+
+	formatted := make([]gin.H, 0, len(users))
+	for _, user := range users {
+		formatted = append(formatted, gin.H{
+			"id":              user.ID,
+			"firstName":       user.FirstName,
+			"lastName":        string(user.LastName[0]) + ".",
+			"program":         textValue(user.Program),
+			"yearLevel":       intValue(user.YearLevel),
+			"profilePhotoUrl": textValue(user.ProfilePhotoUrl),
+			"bio":             textValue(user.Bio),
+		})
+	}
+
+	respondJSON(c, http.StatusOK, gin.H{
+		"success": true,
+		"data":    formatted,
+		"count":   len(formatted),
+	})
+}
+
+func (h *MatchHandler) PassUser(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		unauthorized(c)
+		return
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	targetUUID, err := uuid.Parse(c.Param("targetUserId"))
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "Invalid target user ID")
+		return
+	}
+
+	store := getStore()
+	if store == nil {
+		respondError(c, http.StatusInternalServerError, "store not initialized")
+		return
+	}
+
+	match, err := store.FindOrCreateMatchForUsers(c, repository.FindOrCreateMatchForUsersParams{
+		Column1: userUUID,
+		Column2: targetUUID,
+	})
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Failed to process")
+		return
+	}
+
+	_, err = store.CreateInteraction(c, repository.CreateInteractionParams{
+		MatchID:         match.ID,
+		UserID:          userUUID,
+		InteractionType: "pass",
+		Metadata:        []byte("{}"),
+	})
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Failed to record pass")
+		return
+	}
+
+	respondJSON(c, http.StatusOK, gin.H{
+		"success": true,
+		"message": "User passed",
+	})
+}
+
+func (h *MatchHandler) InterestUser(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		unauthorized(c)
+		return
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	targetUUID, err := uuid.Parse(c.Param("targetUserId"))
+	if err != nil {
+		respondError(c, http.StatusBadRequest, "Invalid target user ID")
+		return
+	}
+
+	store := getStore()
+	if store == nil {
+		respondError(c, http.StatusInternalServerError, "store not initialized")
+		return
+	}
+
+	match, err := store.FindOrCreateMatchForUsers(c, repository.FindOrCreateMatchForUsersParams{
+		Column1: userUUID,
+		Column2: targetUUID,
+	})
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Failed to process")
+		return
+	}
+
+	_, err = store.CreateInteraction(c, repository.CreateInteractionParams{
+		MatchID:         match.ID,
+		UserID:          userUUID,
+		InteractionType: "interest",
+		Metadata:        []byte("{}"),
+	})
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "Failed to record interest")
+		return
+	}
+
+	other, err := store.FindInterestByMatchOtherUser(c, repository.FindInterestByMatchOtherUserParams{
+		MatchID: match.ID,
+		UserID:  userUUID,
+	})
+	if err == nil && other.ID != uuid.Nil {
+		_, _ = store.UpdateMatchInterest(c, repository.UpdateMatchInterestParams{
+			ID:               match.ID,
+			IsMutualInterest: true,
+		})
+		respondJSON(c, http.StatusOK, gin.H{
+			"success":          true,
+			"isMutualInterest": true,
+			"message":          "It's a match! You both are interested in each other!",
+		})
+		return
+	}
+
+	respondJSON(c, http.StatusOK, gin.H{
+		"success": true,
+		"message": "Interest recorded",
+	})
+}

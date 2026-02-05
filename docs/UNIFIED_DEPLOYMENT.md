@@ -58,7 +58,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 # URLs - UPDATE THIS WITH YOUR ACTUAL BACKEND URL FROM STEP 1
 NEXT_PUBLIC_APP_URL=https://wizardmatch.vercel.app
-NEXT_PUBLIC_API_URL=https://wizardmatch-backend-xyz.vercel.app
+NEXT_PUBLIC_API_URL=https://wizardmatch-go-api.onrender.com
 
 # Match Date
 NEXT_PUBLIC_MATCH_RELEASE_DATE=2026-02-05T00:00:00Z

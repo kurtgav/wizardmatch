@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: wizardmatch-go-api
+    runtime: docker
+    dockerfilePath: ./backend-go/Dockerfile
+    dockerContext: ./backend-go
+    region: singapore
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ENV
+        value: production
+      - key: SERVER_PORT
+        value: "3001"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        value: https://wizardmatch.vercel.app
+      - key: ADMIN_EMAIL
+        value: kurtgavin.design@gmail.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URL
+        value: https://wizardmatch-go-api.onrender.com/api/auth/google/callback
