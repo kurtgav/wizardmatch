@@ -25,16 +25,28 @@ func NewRouter(options RouterOptions) *gin.Engine {
 	router.Use(gin.Recovery())
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			options.FrontendURL,
-			"https://wizardmatch.vercel.app",
-			"https://wizardmatch-frontend.vercel.app",
-			"http://localhost:3000",
-			"http://127.0.0.1:3000",
-			"http://0.0.0.0:3000",
+		AllowOriginFunc: func(origin string) bool {
+			// Allow localhost for development
+			if origin == "http://localhost:3000" ||
+				origin == "http://127.0.0.1:3000" ||
+				origin == "http://0.0.0.0:3000" {
+				return true
+			}
+			// Allow all Vercel deployments (production and previews)
+			if len(origin) > 0 && (origin == "https://wizardmatch.vercel.app" ||
+				origin == "https://wizardmatch-frontend.vercel.app" ||
+				// Support Vercel preview URLs
+				(len(origin) > 11 && origin[len(origin)-11:] == ".vercel.app")) {
+				return true
+			}
+			// Allow the configured frontend URL
+			if options.FrontendURL != "" && origin == options.FrontendURL {
+				return true
+			}
+			return false
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Content-Type", "Authorization", "Origin"},
 		AllowCredentials: true,
 	}))
 
