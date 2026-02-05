@@ -2,37 +2,53 @@
 
 import { useAuthState } from '@/hooks/useAuthState';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import Navbar from '@/components/ui/Navbar';
+import { useEffect, useMemo } from 'react';
+
+// Admin emails - centralized for easy management
+const ADMIN_EMAILS = [
+    'kurtgavin.design@gmail.com',
+    'nicolemaaba@gmail.com',
+    'agpfrancisco1@gmail.com', // lowercase for consistent comparison
+];
+
+export function isAdminEmail(email: string | undefined | null): boolean {
+    if (!email) return false;
+    return ADMIN_EMAILS.includes(email.toLowerCase());
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuthState();
     const router = useRouter();
+
+    const isAdmin = useMemo(() => isAdminEmail(user?.email), [user?.email]);
 
     useEffect(() => {
         if (!loading) {
             if (!user) {
                 // Not logged in
                 router.push('/auth/login');
-            } else if (user.email !== 'kurtgavin.design@gmail.com') {
+            } else if (!isAdmin) {
                 // Logged in but not admin
                 router.push('/');
             }
         }
-    }, [user, loading, router]);
+    }, [user, loading, router, isAdmin]);
 
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col bg-retro-cream">
                 <div className="flex-1 flex items-center justify-center">
-                    <div className="w-16 h-16 border-4 border-navy border-t-cardinal-red rounded-full animate-spin"></div>
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 border-4 border-navy border-t-cardinal-red rounded-full animate-spin"></div>
+                        <p className="font-pixel text-navy animate-pulse">Verifying Access...</p>
+                    </div>
                 </div>
             </div>
         );
     }
 
     // Double check rendering
-    if (!user || user.email !== 'kurtgavin.design@gmail.com') return null;
+    if (!user || !isAdmin) return null;
 
     return <>{children}</>;
 }

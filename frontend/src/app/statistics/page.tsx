@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import useSWR from 'swr';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { api } from '@/lib/api';
+import { StatCardSkeleton } from '@/components/ui/Skeleton';
 import {
   Users,
   Heart,
@@ -14,78 +15,81 @@ import {
   GraduationCap,
   Ghost,
   Gamepad2,
+  RefreshCw,
 } from 'lucide-react';
 
+// Fetcher functions for SWR
+const overviewFetcher = async () => {
+  const res = await api.getOverview();
+  return res.success ? res.data : null;
+};
+
+const programFetcher = async () => {
+  const res = await api.getByProgram();
+  return res.success ? res.data : [];
+};
+
+const yearFetcher = async () => {
+  const res = await api.getByYearLevel();
+  return res.success ? res.data : [];
+};
+
 export default function StatisticsPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [programStats, setProgramStats] = useState<any[]>([]);
-  const [yearStats, setYearStats] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // SWR with 10-second revalidation for real-time updates
+  const { data: stats, isValidating: statsLoading, mutate: mutateStats } = useSWR(
+    '/api/analytics/overview',
+    overviewFetcher,
+    {
+      refreshInterval: 10000, // Refresh every 10 seconds
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    }
+  );
 
-  // Real-time stats polling - refresh every 30 seconds
-  useEffect(() => {
-    // Set a timeout to show content even if API is slow
-    const timeout = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Show content after 2 seconds max
+  const { data: programStats = [], isValidating: programLoading } = useSWR(
+    '/api/analytics/programs',
+    programFetcher,
+    {
+      refreshInterval: 10000,
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    }
+  );
 
-    const loadStats = async () => {
-      try {
-        const [overviewRes, programRes, yearRes] = await Promise.all([
-          api.getOverview().catch(() => ({ success: false, data: null })),
-          api.getByProgram().catch(() => ({ success: false, data: [] })),
-          api.getByYearLevel().catch(() => ({ success: false, data: [] })),
-        ]);
+  const { data: yearStats = [], isValidating: yearLoading } = useSWR(
+    '/api/analytics/year-levels',
+    yearFetcher,
+    {
+      refreshInterval: 10000,
+      revalidateOnFocus: true,
+      dedupingInterval: 5000,
+    }
+  );
 
-        if (overviewRes?.success) setStats(overviewRes.data);
-        if (programRes?.success) setProgramStats(programRes.data || []);
-        if (yearRes?.success) setYearStats(yearRes.data || []);
+  const isLoading = !stats && statsLoading;
+  const isRefreshing = statsLoading || programLoading || yearLoading;
 
-        // If all failed, show error
-        if (!overviewRes?.success && !programRes?.success && !yearRes?.success) {
-          setError('Unable to load statistics. Please try again later.');
-        }
-      } catch (err) {
-        console.error('Failed to load statistics:', err);
-        setError('Failed to connect to server.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Initial load
-    loadStats();
-
-    // Set up polling interval (every 30 seconds)
-    const interval = setInterval(() => {
-      loadStats();
-    }, 30000);
-
-    // Cleanup on unmount
-    return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Show skeleton while loading (for first 500ms only)
-  if (loading) {
+  // Show skeleton while loading
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-retro-cream">
         <Header />
         <main className="pt-24 pb-16">
           <div className="container mx-auto px-4 max-w-7xl">
             <div className="text-center mb-16">
-              <div className="h-12 bg-retro-yellow border-4 border-navy mx-auto w-48 mb-4 animate-pulse"></div>
-              <div className="h-16 bg-navy/10 mx-auto w-96 mb-2 animate-pulse"></div>
-              <div className="h-6 bg-navy/5 mx-auto w-64 animate-pulse"></div>
+              <div className="inline-block bg-retro-yellow/50 border-4 border-navy/30 px-8 py-3 shadow-[6px_6px_0_0_rgba(30,58,138,0.3)] mb-8 animate-pulse">
+                <div className="h-5 w-24 bg-navy/20 rounded"></div>
+              </div>
+              <div className="h-12 bg-navy/10 mx-auto w-80 mb-4 animate-pulse rounded"></div>
+              <div className="h-6 bg-navy/5 mx-auto w-48 animate-pulse rounded"></div>
             </div>
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-white border-4 border-navy p-8 h-40 animate-pulse"></div>
+                <StatCardSkeleton key={i} />
               ))}
             </div>
+            <div className="bg-white/50 border-4 border-navy/30 h-48 animate-pulse rounded mb-12"></div>
+            <div className="bg-white/50 border-4 border-navy/30 h-64 animate-pulse rounded"></div>
           </div>
         </main>
       </div>
@@ -104,7 +108,7 @@ export default function StatisticsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-16"
           >
-            {/* Pixel Badge */}
+            {/* Pixel Badge with Live Indicator */}
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -116,6 +120,10 @@ export default function StatisticsPage() {
                 <p className="font-pixel text-xs text-navy">
                   HIGH SCORES
                 </p>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${isRefreshing ? 'bg-retro-orange animate-pulse' : 'bg-green-500'}`}></span>
+                  <span className="font-pixel text-[10px] text-navy/60">LIVE</span>
+                </div>
                 <Heart className="w-5 h-5 text-cardinal-red" />
               </div>
             </motion.div>
@@ -124,9 +132,19 @@ export default function StatisticsPage() {
               Wizard Match{' '}
               <span className="text-cardinal-red bg-retro-pink px-3">Statistics</span>
             </h1>
-            <p className="font-body text-xl text-navy/80">
+            <p className="font-body text-xl text-navy/80 mb-4">
               See how Wizards are finding love
             </p>
+
+            {/* Refresh Button */}
+            <button
+              onClick={() => mutateStats()}
+              disabled={isRefreshing}
+              className={`inline-flex items-center gap-2 font-pixel text-xs px-4 py-2 border-2 border-navy bg-white hover:bg-retro-gray/20 transition-colors ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'UPDATING...' : 'REFRESH NOW'}
+            </button>
           </motion.div>
 
           {/* Overview Stats - Retro Cards */}

@@ -3,7 +3,7 @@ import { crushService } from '../services/crush.service';
 import { campaignService } from '../services/campaign.service';
 import { createError, asyncHandler } from '../middleware/error.middleware';
 import { z } from 'zod';
-import { config } from '../config/env.config';
+import { isAdminEmail } from '../config/env.config';
 
 // Validation schemas
 const submitCrushListSchema = z.object({
@@ -28,11 +28,7 @@ export const crushController = {
     }
 
     // Check if crush list submission is allowed
-    const adminEmails = ['kurtgavin.design@gmail.com', 'admin@wizardmatch.ai'];
-    if (config.adminEmail && !adminEmails.includes(config.adminEmail)) {
-      adminEmails.push(config.adminEmail);
-    }
-    const isAdmin = adminEmails.includes(req.user!.email);
+    const isAdmin = isAdminEmail(req.user!.email);
 
     const canSubmit = campaignService.isActionAllowed(campaign, 'submit_crush_list');
     if (!canSubmit && !isAdmin) {
@@ -129,11 +125,7 @@ export const crushController = {
     }
 
     // Check if crush list submission is still allowed
-    const adminEmails = ['kurtgavin.design@gmail.com', 'admin@wizardmatch.ai'];
-    if (config.adminEmail && !adminEmails.includes(config.adminEmail)) {
-      adminEmails.push(config.adminEmail);
-    }
-    const isAdmin = adminEmails.includes(req.user!.email);
+    const isAdmin = isAdminEmail(req.user!.email);
 
     const canSubmit = campaignService.isActionAllowed(campaign, 'submit_crush_list');
     if (!canSubmit && !isAdmin) {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/db.config';
 import { createError, asyncHandler } from '../middleware/error.middleware';
 import { matchingService } from '../services/matching.service';
+import { aiMatchingService } from '../services/ai-matching.service';
 import { z } from 'zod';
 
 // Validation schemas
@@ -229,6 +230,29 @@ export const adminController = {
       success: true,
       data: result,
       message: `Generated ${result.matchesCreated} matches successfully`,
+    });
+  }),
+
+  /**
+   * Generate AI-powered matches using LLM for compatibility scoring
+   */
+  generateAIMatches: asyncHandler(async (req: Request, res: Response) => {
+    // Get active campaign
+    const campaign = await prisma.campaign.findFirst({
+      where: { isActive: true },
+    });
+
+    if (!campaign) {
+      throw createError('No active campaign found', 404);
+    }
+
+    // Trigger AI match generation
+    const result = await aiMatchingService.generateAIMatches(campaign.id);
+
+    res.json({
+      success: true,
+      data: result,
+      message: `AI-powered matching complete: ${result.matchesCreated} matches generated from ${result.usersProcessed} users (avg. score: ${result.averageScore}%)`,
     });
   }),
 

@@ -3,6 +3,20 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Centralized admin emails list for RBAC
+const ADMIN_EMAILS = [
+  'kurtgavin.design@gmail.com',
+  'nicolemaaba@gmail.com',
+  'agpfrancisco1@gmail.com',
+  'admin@wizardmatch.ai',
+];
+
+// Helper function to check if email is admin
+export function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 interface Config {
   nodeEnv: string;
   port: number;
@@ -16,6 +30,7 @@ interface Config {
   emailUser: string;
   emailPassword: string;
   adminEmail: string;
+  adminEmails: string[];
   supportEmail: string;
   frontendUrl: string;
   backendUrl: string;
@@ -39,6 +54,7 @@ const config: Config = {
   emailUser: process.env.EMAIL_USER || '',
   emailPassword: process.env.EMAIL_PASSWORD || '',
   adminEmail: process.env.ADMIN_EMAIL || 'admin@wizardmatch.ai',
+  adminEmails: ADMIN_EMAILS,
   supportEmail: process.env.SUPPORT_EMAIL || 'support@wizardmatch.ai',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   backendUrl: process.env.BACKEND_URL || 'http://localhost:3001',
@@ -63,3 +79,4 @@ if (missingEnvVars.length > 0 && config.nodeEnv === 'production') {
 }
 
 export { config };
+

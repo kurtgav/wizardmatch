@@ -23,6 +23,7 @@ router.delete('/questions/:questionId', adminController.deleteQuestion);
 
 // Match management
 router.post('/generate-matches', adminController.generateMatches);
+router.post('/generate-ai-matches', adminController.generateAIMatches); // AI-powered matching
 router.get('/matches', adminController.getAllMatches);
 router.post('/manual-match', adminController.createManualMatch);
 router.get('/eligible-users', adminController.getEligibleUsers);
