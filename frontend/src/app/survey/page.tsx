@@ -169,7 +169,8 @@ export default function SurveyPage() {
 
         const res = await api.completeSurvey() as { success: boolean, message?: string };
         if (res.success) {
-          router.push('/survey/complete');
+          // Redirect to profile edit page after survey completion
+          router.push('/profile/edit');
         } else {
           throw new Error(res.message || 'Completion failed');
         }
