@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/types/user';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
@@ -21,12 +22,36 @@ export function useAuthState() {
         return null;
       }
 
-      console.log('Fetched user data:', userData);
+      console.log('Fetched user data from DB:', userData);
       return userData as User || null;
     } catch (err) {
       console.error('Error fetching user data:', err);
       return null;
     }
+  }, []);
+
+  // Convert Supabase Auth user to our User type
+  const convertAuthUser = useCallback((authUser: SupabaseUser): User => {
+    // Extract name from metadata or email
+    const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || '';
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0] || authUser.email?.split('@')[0] || 'User';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    return {
+      id: authUser.id,
+      email: authUser.email || '',
+      username: null,
+      firstName,
+      lastName,
+      studentId: '',
+      program: '',
+      yearLevel: 1,
+      gender: '',
+      seekingGender: '',
+      surveyCompleted: false,
+      profilePhotoUrl: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture,
+    };
   }, []);
 
   useEffect(() => {
@@ -49,9 +74,19 @@ export function useAuthState() {
         console.log('Initial session:', session?.user?.email);
 
         if (mounted && session?.user) {
+          // Try to fetch user from database
           const userData = await fetchUserData(session.user.id);
-          console.log('Setting user:', userData);
-          setUser(userData);
+
+          if (userData) {
+            // User exists in database
+            console.log('Setting user from DB:', userData);
+            setUser(userData);
+          } else {
+            // User doesn't exist in DB yet, use auth user
+            console.log('User not in DB yet, using auth user');
+            const authUser = convertAuthUser(session.user);
+            setUser(authUser);
+          }
         }
 
         if (mounted) setLoading(false);
@@ -74,9 +109,17 @@ export function useAuthState() {
         if (!mounted) return;
 
         if (session?.user) {
+          // Try to fetch user from database
           const userData = await fetchUserData(session.user.id);
-          console.log('Setting user from auth state change:', userData);
-          setUser(userData);
+
+          if (userData) {
+            console.log('Setting user from DB (auth change):', userData);
+            setUser(userData);
+          } else {
+            console.log('User not in DB yet (auth change), using auth user');
+            const authUser = convertAuthUser(session.user);
+            setUser(authUser);
+          }
         } else {
           console.log('No session, setting user to null');
           setUser(null);
@@ -90,7 +133,7 @@ export function useAuthState() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserData]);
+  }, [fetchUserData, convertAuthUser]);
 
   // Mutate function to refresh user data
   const mutate = useCallback(async () => {
@@ -98,11 +141,16 @@ export function useAuthState() {
 
     if (session?.user) {
       const userData = await fetchUserData(session.user.id);
-      setUser(userData);
+      if (userData) {
+        setUser(userData);
+      } else {
+        const authUser = convertAuthUser(session.user);
+        setUser(authUser);
+      }
     } else {
       setUser(null);
     }
-  }, [fetchUserData]);
+  }, [fetchUserData, convertAuthUser]);
 
   return {
     user,
