@@ -38,21 +38,7 @@ function AuthCallbackContent() {
           }
 
           if (sessionData.session) {
-            // Successfully authenticated!
-            const userId = sessionData.session.user.id;
-
-            // Check if user has completed survey
-            const { data: userData } = await supabase()
-              .from('users')
-              .select('surveyCompleted')
-              .eq('id', userId)
-              .maybeSingle();
-
-            if (userData?.surveyCompleted) {
-              router.push('/matches');
-            } else {
-              router.push('/survey');
-            }
+            router.push('/survey');
             return;
           }
         }
@@ -60,7 +46,7 @@ function AuthCallbackContent() {
         // If no tokens in URL, check current session
         const { data: existingSession } = await supabase().auth.getSession();
         if (existingSession.session) {
-          router.push('/matches');
+          router.push('/survey');
           return;
         }
 
