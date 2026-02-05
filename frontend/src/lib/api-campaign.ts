@@ -59,6 +59,12 @@ export async function getActiveCampaign() {
   return response.json();
 }
 
+export async function getCampaigns() {
+  const response = await fetchAPI(`${API_URL}/campaigns`);
+  if (!response.ok) throw new Error('Failed to fetch campaigns');
+  return response.json();
+}
+
 export async function getCampaignStats(campaignId: string) {
   const response = await fetchAPI(`${API_URL}/campaigns/${campaignId}/stats`);
   if (!response.ok) throw new Error('Failed to get campaign stats');

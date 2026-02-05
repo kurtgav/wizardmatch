@@ -58,7 +58,7 @@ func (h *CrushHandler) SubmitCrushList(c *gin.Context) {
 
 	campaign, err := store.GetActiveCampaign(c)
 	if err != nil {
-		respondError(c, http.StatusBadRequest, "No active campaign")
+		respondError(c, http.StatusBadRequest, "No active campaign: "+err.Error())
 		return
 	}
 
@@ -146,8 +146,8 @@ func (h *CrushHandler) GetCrushList(c *gin.Context) {
 	}
 
 	campaign, err := store.GetActiveCampaign(c)
-	if err != nil {
-		respondError(c, http.StatusBadRequest, "No active campaign")
+	if (err != nil) {
+		respondError(c, http.StatusBadRequest, "No active campaign: "+err.Error())
 		return
 	}
 
@@ -155,8 +155,8 @@ func (h *CrushHandler) GetCrushList(c *gin.Context) {
 		UserID:     userUUID,
 		CampaignID: campaign.ID,
 	})
-	if err != nil {
-		respondError(c, http.StatusInternalServerError, "Failed to load crush list")
+	if (err != nil) {
+		respondError(c, http.StatusInternalServerError, "Failed to load crush list: "+err.Error())
 		return
 	}
 

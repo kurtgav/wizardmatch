@@ -5,15 +5,51 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { getActiveCampaign, createCampaign, updateCampaign, getCampaignStats, updateCampaignStats } from '@/lib/api-campaign';
+import { Input } from '@/components/ui/input';
+import {
+    getCampaigns,
+    createCampaign,
+    updateCampaign,
+    deleteCampaign
+} from '@/lib/api-campaign';
 import { format } from 'date-fns';
+
+interface CampaignData {
+    id?: string;
+    name: string;
+    surveyOpenDate: string;
+    surveyCloseDate: string;
+    profileUpdateStartDate: string;
+    profileUpdateEndDate: string;
+    resultsReleaseDate: string;
+    isActive: boolean;
+    config: any;
+    // status fields from backend
+    phase?: string;
+    nextPhaseLabel?: string;
+    timeRemaining?: number;
+}
+
+const DEFAULT_FORM_DATA: CampaignData = {
+    name: '',
+    surveyOpenDate: '',
+    surveyCloseDate: '',
+    profileUpdateStartDate: '',
+    profileUpdateEndDate: '',
+    resultsReleaseDate: '',
+    isActive: false,
+    config: {}
+};
 
 export default function AdminCampaignsPage() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-    const [campaign, setCampaign] = useState<any>(null);
+
+    const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState<any>(null);
+    const [view, setView] = useState<'list' | 'form'>('list');
+    const [formData, setFormData] = useState<CampaignData>(DEFAULT_FORM_DATA);
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -22,155 +58,283 @@ export default function AdminCampaignsPage() {
         }
 
         // Check if admin (simple check)
-        if (user && user.email !== 'kurtgavin.design@gmail.com' && user.email !== 'nicolemaaba@gmail.com' && user.email !== 'Agpfrancisco1@gmail.com') {
+        const allowedEmails = ['kurtgavin.design@gmail.com', 'nicolemaaba@gmail.com', 'Agpfrancisco1@gmail.com'];
+        if (user && !allowedEmails.includes(user.email)) {
             router.push('/dashboard');
             return;
         }
 
-        loadCampaign();
+        loadCampaigns();
     }, [user, authLoading, router]);
 
-    const loadCampaign = async () => {
+    const loadCampaigns = async () => {
         setLoading(true);
         try {
-            const res = await getActiveCampaign();
-            if (res.success && res.data) {
-                setCampaign(res.data);
-                loadStats(res.data.id);
+            const res = await getCampaigns();
+            if (res.success && Array.isArray(res.data)) {
+                setCampaigns(res.data);
             }
         } catch (err) {
-            console.error(err);
+            console.error('Failed to load campaigns', err);
         } finally {
             setLoading(false);
         }
     };
 
-    const loadStats = async (id: string) => {
+    const handleCreateClick = () => {
+        setFormData(DEFAULT_FORM_DATA);
+        setIsEditing(false);
+        setView('form');
+    };
+
+    const handleEditClick = (campaign: CampaignData) => {
+        // format dates for datetime-local input (YYYY-MM-DDThh:mm)
+        const formatDateForInput = (dateStr: string) => {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toISOString().slice(0, 16); // Extract YYYY-MM-DDThh:mm
+        };
+
+        setFormData({
+            ...campaign,
+            surveyOpenDate: formatDateForInput(campaign.surveyOpenDate),
+            surveyCloseDate: formatDateForInput(campaign.surveyCloseDate),
+            profileUpdateStartDate: formatDateForInput(campaign.profileUpdateStartDate),
+            profileUpdateEndDate: formatDateForInput(campaign.profileUpdateEndDate),
+            resultsReleaseDate: formatDateForInput(campaign.resultsReleaseDate),
+        });
+        setIsEditing(true);
+        setView('form');
+    };
+
+    const handleDeleteClick = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) return;
+
         try {
-            const res = await getCampaignStats(id);
-            if (res.success && res.data) {
-                setStats(res.data.campaign);
-            }
+            await deleteCampaign(id);
+            await loadCampaigns();
         } catch (err) {
+            alert('Failed to delete campaign');
             console.error(err);
         }
     };
 
-    const handleCreateDefaults = async () => {
-        if (!confirm('Create default Valentine 2026 campaign?')) return;
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Convert dates back to ISO strings with timezone (simple approach: append Z if treating as UTC, or just let Date handle it)
+        // The backend uses time.Parse(time.RFC3339, value).
+        // If we send "2026-02-14T00:00", backend might reject if it expects full ISO.
+        // Let's ensure we send full ISO string.
+
+        const toISO = (val: string) => {
+            if (!val) return '';
+            return new Date(val).toISOString();
+        };
+
+        const payload = {
+            ...formData,
+            surveyOpenDate: toISO(formData.surveyOpenDate),
+            surveyCloseDate: toISO(formData.surveyCloseDate),
+            profileUpdateStartDate: toISO(formData.profileUpdateStartDate),
+            profileUpdateEndDate: toISO(formData.profileUpdateEndDate),
+            resultsReleaseDate: toISO(formData.resultsReleaseDate),
+        };
 
         try {
-            const today = new Date();
-            const nextWeek = new Date(today);
-            nextWeek.setDate(today.getDate() + 7);
-
-            // Default dates as per plan
-            const defaultCampaign = {
-                name: "Wizard Match Valentine's 2026",
-                surveyOpenDate: "2026-02-05T00:00:00Z",
-                surveyCloseDate: "2026-02-10T23:59:59Z",
-                profileUpdateStartDate: "2026-02-11T00:00:00Z",
-                profileUpdateEndDate: "2026-02-13T23:59:59Z",
-                resultsReleaseDate: "2026-02-14T00:00:00Z",
-                isActive: true,
-                config: {}
-            };
-
-            await createCampaign(defaultCampaign);
-            loadCampaign();
+            if (isEditing && formData.id) {
+                await updateCampaign(formData.id, payload);
+            } else {
+                await createCampaign(payload);
+            }
+            setView('list');
+            loadCampaigns();
         } catch (err) {
-            alert('Failed to create');
+            console.error(err);
+            alert('Failed to save campaign');
         }
     };
 
-    const handlePhaseChange = async (phase: string) => {
-        if (!campaign) return;
-        // Helper to simulate phase changes by updating dates (for testing)
-        // This is getting complex, maybe just simple date Editor?
-        // For now, let's just show info.
-        alert('Date editing to come in next iteration.');
+    const handleInputChange = (field: keyof CampaignData, value: string | boolean) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div className="p-8 text-navy font-pixel">Loading...</div>;
 
     return (
-        <div className="p-8">
-            <h1 className="text-2xl font-bold mb-6 font-pixel text-navy">Campaign Management</h1>
-
-            {!campaign ? (
-                <Card className="p-6 bg-white border-2 border-navy">
-                    <p className="mb-4">No active campaign found.</p>
-                    <Button onClick={handleCreateDefaults} className="bg-cardinal-red text-white">
-                        Create Valentine's 2026 Campaign
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold font-pixel text-navy">Campaign Management</h1>
+                {view === 'list' && (
+                    <Button onClick={handleCreateClick} className="bg-cardinal-red text-white hover:bg-red-700 font-bold">
+                        + Create Campaign
                     </Button>
-                </Card>
-            ) : (
-                <div className="space-y-6">
-                    {/* Active Campaign Info */}
-                    <Card className="p-6 bg-white border-2 border-navy relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 bg-retro-mint text-navy text-xs font-bold border-l-2 border-b-2 border-navy">
-                            ACTIVE
-                        </div>
+                )}
+            </div>
 
-                        <h2 className="text-xl font-bold mb-4">{campaign.name}</h2>
+            {view === 'list' ? (
+                <div className="grid gap-6">
+                    {campaigns.length === 0 ? (
+                        <div className="text-center py-12 bg-white border-2 border-navy rounded-lg">
+                            <p className="text-navy/60 mb-4">No campaigns found.</p>
+                            <Button onClick={handleCreateClick} variant="outline" className="border-navy text-navy">
+                                Create your first campaign
+                            </Button>
+                        </div>
+                    ) : (
+                        campaigns.map((campaign) => (
+                            <Card key={campaign.id} className="p-6 bg-white border-2 border-navy relative overflow-hidden group hover:shadow-lg transition-all">
+                                <div className={`absolute top-0 right-0 p-2 text-xs font-bold border-l-2 border-b-2 border-navy ${campaign.isActive ? 'bg-retro-mint text-navy' : 'bg-gray-200 text-gray-500'}`}>
+                                    {campaign.isActive ? 'ACTIVE' : 'INACTIVE'}
+                                </div>
+
+                                <div className="mb-4">
+                                    <h2 className="text-xl font-bold text-navy mb-1">{campaign.name}</h2>
+                                    <div className="text-xs uppercase font-bold text-cardinal-red tracking-wider">
+                                        ID: {campaign.id?.substring(0, 8)}...
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 text-sm mb-6 bg-retro-cream p-4 border border-navy/20 rounded">
+                                    <div>
+                                        <div className="text-navy/60 text-xs uppercase mb-1">Survey Open</div>
+                                        <div className="font-bold">{format(new Date(campaign.surveyOpenDate), 'MMM d, yyyy HH:mm')}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-navy/60 text-xs uppercase mb-1">Survey Close</div>
+                                        <div className="font-bold">{format(new Date(campaign.surveyCloseDate), 'MMM d, yyyy HH:mm')}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-navy/60 text-xs uppercase mb-1">Profile Updates</div>
+                                        <div className="font-bold">
+                                            {format(new Date(campaign.profileUpdateStartDate), 'MMM d')} - {format(new Date(campaign.profileUpdateEndDate), 'MMM d')}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-navy/60 text-xs uppercase mb-1">Results</div>
+                                        <div className="font-bold">{format(new Date(campaign.resultsReleaseDate), 'MMM d, yyyy HH:mm')}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-navy/60 text-xs uppercase mb-1">Phase</div>
+                                        <div className="font-bold text-cardinal-red">{campaign.phase || '-'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 justify-end">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => handleEditClick(campaign)}
+                                        className="border-navy text-navy hover:bg-navy/5"
+                                    >
+                                        Edit Configuration
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => handleDeleteClick(campaign.id!)}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                        Delete
+                                    </Button>
+                                </div>
+                            </Card>
+                        ))
+                    )}
+                </div>
+            ) : (
+                <Card className="p-8 bg-white border-2 border-navy max-w-2xl mx-auto">
+                    <h2 className="text-xl font-bold mb-6 pb-4 border-b-2 border-navy/10">
+                        {isEditing ? 'Edit Campaign' : 'New Campaign'}
+                    </h2>
+
+                    <form onSubmit={handleFormSubmit} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-navy uppercase">Campaign Name</label>
+                            <Input
+                                value={formData.name}
+                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                required
+                                className="border-navy"
+                                placeholder="e.g. Valentine's 2026"
+                            />
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <h3 className="font-bold border-b-2 border-navy/10 pb-1">Timeline</h3>
-                                <div className="grid grid-cols-[140px_1fr] gap-2 text-sm">
-                                    <div className="text-navy/60">Survey Open:</div>
-                                    <div>{format(new Date(campaign.surveyOpenDate), 'PPP p')}</div>
-
-                                    <div className="text-navy/60">Survey Close:</div>
-                                    <div>{format(new Date(campaign.surveyCloseDate), 'PPP p')}</div>
-
-                                    <div className="text-navy/60">Profile Update:</div>
-                                    <div>{format(new Date(campaign.profileUpdateStartDate), 'PPP')} - {format(new Date(campaign.profileUpdateEndDate), 'PPP')}</div>
-
-                                    <div className="text-navy/60">Results Day:</div>
-                                    <div>{format(new Date(campaign.resultsReleaseDate), 'PPP p')}</div>
-                                </div>
+                                <label className="text-sm font-bold text-navy uppercase">Survey Returns (Open)</label>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.surveyOpenDate}
+                                    onChange={(e) => handleInputChange('surveyOpenDate', e.target.value)}
+                                    required
+                                    className="border-navy"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-navy uppercase">Survey Close</label>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.surveyCloseDate}
+                                    onChange={(e) => handleInputChange('surveyCloseDate', e.target.value)}
+                                    required
+                                    className="border-navy"
+                                />
                             </div>
 
                             <div className="space-y-2">
-                                <h3 className="font-bold border-b-2 border-navy/10 pb-1">Current Status</h3>
-                                <div className="grid grid-cols-[140px_1fr] gap-2 text-sm">
-                                    <div className="text-navy/60">Phase:</div>
-                                    <div className="uppercase font-bold text-cardinal-red">{campaign.phase}</div>
+                                <label className="text-sm font-bold text-navy uppercase">Profile Updates Start</label>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.profileUpdateStartDate}
+                                    onChange={(e) => handleInputChange('profileUpdateStartDate', e.target.value)}
+                                    required
+                                    className="border-navy"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-navy uppercase">Profile Updates End</label>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.profileUpdateEndDate}
+                                    onChange={(e) => handleInputChange('profileUpdateEndDate', e.target.value)}
+                                    required
+                                    className="border-navy"
+                                />
+                            </div>
 
-                                    <div className="text-navy/60">Next Event:</div>
-                                    <div>{campaign.nextPhaseLabel} ({campaign.timeRemaining})</div>
-                                </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-navy uppercase">Results Release</label>
+                                <Input
+                                    type="datetime-local"
+                                    value={formData.resultsReleaseDate}
+                                    onChange={(e) => handleInputChange('resultsReleaseDate', e.target.value)}
+                                    required
+                                    className="border-navy"
+                                />
                             </div>
                         </div>
-                    </Card>
 
-                    {/* Stats */}
-                    {stats && (
-                        <Card className="p-6 bg-white border-2 border-navy">
-                            <h3 className="font-bold border-b-2 border-navy/10 pb-1 mb-4">Live Statistics</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-retro-cream p-4 border border-navy text-center">
-                                    <div className="text-3xl font-pixel text-navy">{stats.totalParticipants || 0}</div>
-                                    <div className="text-xs uppercase text-navy/60 mt-1">Participants</div>
-                                </div>
-                                <div className="bg-retro-lavender p-4 border border-navy text-center">
-                                    <div className="text-3xl font-pixel text-navy">{stats.surveyCompletedCount || 0}</div>
-                                    <div className="text-xs uppercase text-navy/60 mt-1">Surveys Done</div>
-                                </div>
-                                <div className="bg-retro-mint p-4 border border-navy text-center">
-                                    <div className="text-3xl font-pixel text-navy">{stats.totalMatches || 0}</div>
-                                    <div className="text-xs uppercase text-navy/60 mt-1">Matches</div>
-                                </div>
-                            </div>
-                        </Card>
-                    )}
+                        <div className="flex items-center gap-2 pt-4">
+                            <input
+                                type="checkbox"
+                                id="isActive"
+                                checked={formData.isActive}
+                                onChange={(e) => handleInputChange('isActive', e.target.checked)}
+                                className="w-5 h-5 accent-cardinal-red"
+                            />
+                            <label htmlFor="isActive" className="text-navy font-bold">Set as Active Campaign</label>
+                        </div>
+                        <p className="text-xs text-navy/60 -mt-4 pl-7">Only one campaign should be active at a time.</p>
 
-                    <div className="flex gap-4">
-                        <Button variant="outline" className="border-navy text-navy" disabled>Edit Configuration</Button>
-                        <Button variant="primary" className="bg-red-600 border-red-800 text-white hover:bg-red-700" disabled>End Campaign</Button>
-                    </div>
-                </div>
+                        <div className="flex justify-end gap-4 pt-6 border-t border-navy/10 mt-6">
+                            <Button type="button" variant="ghost" onClick={() => setView('list')}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" className="bg-cardinal-red text-white hover:bg-red-700 min-w-[120px]">
+                                {isEditing ? 'Save Changes' : 'Create Campaign'}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
             )}
         </div>
     );

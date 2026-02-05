@@ -17,7 +17,7 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: FRONTEND_URL
-        value: https://wizardmatch.vercel.app
+        value: https://wizardmatch-frontend.vercel.app
       - key: ADMIN_EMAIL
         value: kurtgavin.design@gmail.com
       - key: GOOGLE_CLIENT_ID
