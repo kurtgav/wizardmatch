@@ -54,6 +54,22 @@ export default function AdminDashboardPage() {
     }
   }, [user, authLoading, router]);
 
+  // Real-time stats polling - refresh every 15 seconds for admin
+  useEffect(() => {
+    if (!user || !ADMIN_EMAILS.includes(user.email)) return;
+
+    // Initial load
+    loadStats();
+
+    // Set up polling interval (every 15 seconds for faster admin updates)
+    const interval = setInterval(() => {
+      loadStats();
+    }, 15000);
+
+    // Cleanup on unmount
+    return () => clearInterval(interval);
+  }, [user]);
+
   async function loadStats() {
     try {
       // Use local storage token which should be available

@@ -23,6 +23,7 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Real-time stats polling - refresh every 30 seconds
   useEffect(() => {
     // Set a timeout to show content even if API is slow
     const timeout = setTimeout(() => {
@@ -49,12 +50,23 @@ export default function StatisticsPage() {
         console.error('Failed to load statistics:', err);
         setError('Failed to connect to server.');
       } finally {
-        clearTimeout(timeout);
         setLoading(false);
       }
     };
 
+    // Initial load
     loadStats();
+
+    // Set up polling interval (every 30 seconds)
+    const interval = setInterval(() => {
+      loadStats();
+    }, 30000);
+
+    // Cleanup on unmount
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, []);
 
   // Show skeleton while loading (for first 500ms only)
