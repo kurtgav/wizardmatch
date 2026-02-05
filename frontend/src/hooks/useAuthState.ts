@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/types/user';
 
@@ -7,6 +7,22 @@ export function useAuthState() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Function to fetch user data
+  const fetchUserData = useCallback(async (userId: string) => {
+    try {
+      const { data: userData } = await supabase()
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      return userData as User || null;
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
@@ -14,14 +30,8 @@ export function useAuthState() {
         const { data: { session } } = await supabase().auth.getSession();
 
         if (session?.user) {
-          // Fetch user data from Supabase
-          const { data: userData } = await supabase()
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          setUser(userData as User || null);
+          const userData = await fetchUserData(session.user.id);
+          setUser(userData);
         }
 
         setLoading(false);
@@ -40,14 +50,8 @@ export function useAuthState() {
         console.log('Auth state changed:', event, session?.user?.email);
 
         if (session?.user) {
-          // Fetch user data from Supabase
-          const { data: userData } = await supabase()
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          setUser(userData as User || null);
+          const userData = await fetchUserData(session.user.id);
+          setUser(userData);
         } else {
           setUser(null);
         }
@@ -59,11 +63,24 @@ export function useAuthState() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserData]);
+
+  // Mutate function to refresh user data
+  const mutate = useCallback(async () => {
+    const { data: { session } } = await supabase().auth.getSession();
+
+    if (session?.user) {
+      const userData = await fetchUserData(session.user.id);
+      setUser(userData);
+    } else {
+      setUser(null);
+    }
+  }, [fetchUserData]);
 
   return {
     user,
     loading,
     error,
+    mutate,
   };
 }
