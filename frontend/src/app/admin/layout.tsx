@@ -3,18 +3,7 @@
 import { useAuthState } from '@/hooks/useAuthState';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
-
-// Admin emails - centralized for easy management
-const ADMIN_EMAILS = [
-    'kurtgavin.design@gmail.com',
-    'nicolemaaba@gmail.com',
-    'agpfrancisco1@gmail.com', // lowercase for consistent comparison
-];
-
-export function isAdminEmail(email: string | undefined | null): boolean {
-    if (!email) return false;
-    return ADMIN_EMAILS.includes(email.toLowerCase());
-}
+import { isAdminEmail } from '@/lib/admin';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { user, loading } = useAuthState();
