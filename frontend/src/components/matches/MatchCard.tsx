@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, Eye, Lock, Flower } from 'lucide-react';
+import { Heart, Eye, Lock, Flower, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MatchCardProps {
@@ -22,9 +22,12 @@ interface MatchCardProps {
   };
   onReveal: () => void;
   onClick: () => void;
+  onPass?: () => void;
+  onInterest?: () => void;
+  showActions?: boolean;
 }
 
-export default function MatchCard({ match, onReveal, onClick }: MatchCardProps) {
+export default function MatchCard({ match, onReveal, onClick, onPass, onInterest, showActions = false }: MatchCardProps) {
   const tierColors = {
     perfect: 'bg-cardinal-red',
     excellent: 'bg-retro-pink',
@@ -38,13 +41,12 @@ export default function MatchCard({ match, onReveal, onClick }: MatchCardProps) 
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
       className={cn(
-        'relative bg-white border-4 border-navy p-6 shadow-[8px_8px_0_0_#1E3A8A] transition-shadow duration-200 cursor-pointer group',
+        'relative bg-white border-4 border-navy p-6 shadow-[8px_8px_0_0_#1E3A8A] transition-shadow duration-200',
         !match.isRevealed && 'overflow-hidden'
       )}
-      onClick={onClick}
     >
       {/* Compatibility Badge */}
-      <div className="absolute -top-6 -right-6 z-10 transform rotate-12 group-hover:rotate-0 transition-transform">
+      <div className="absolute -top-6 -right-6 z-10 transform rotate-12">
         <div className="relative">
           <div className={cn(
             'w-20 h-20 border-4 border-navy flex flex-col items-center justify-center shadow-[4px_4px_0_0_rgba(0,0,0,0.2)]',
@@ -117,9 +119,37 @@ export default function MatchCard({ match, onReveal, onClick }: MatchCardProps) 
         </div>
       </div>
 
-      {/* Bio or Lock Message */}
+      {/* Bio or Lock Message or Actions */}
       <div className="min-h-[80px] flex items-center justify-center">
-        {match.isRevealed ? (
+        {showActions && onPass && onInterest ? (
+          // Show X/✔ buttons for matching
+          <div className="flex gap-3 w-full">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPass();
+              }}
+              className="flex-1 bg-red-500 text-white py-3 px-4 border-2 border-navy font-bold font-pixel shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#1E3A8A] transition-all flex items-center justify-center gap-2"
+            >
+              <X className="w-5 h-5" />
+              PASS
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onInterest();
+              }}
+              className="flex-1 bg-green-500 text-white py-3 px-4 border-2 border-navy font-bold font-pixel shadow-[4px_4px_0_0_#1E3A8A] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#1E3A8A] transition-all flex items-center justify-center gap-2"
+            >
+              <Check className="w-5 h-5" />
+              INTERESTED
+            </motion.button>
+          </div>
+        ) : match.isRevealed ? (
           match.matchedUser.bio ? (
             <p className="font-body text-sm text-center text-navy line-clamp-3 bg-retro-cream p-3 border-2 border-navy/10 italic">
               "{match.matchedUser.bio}"
