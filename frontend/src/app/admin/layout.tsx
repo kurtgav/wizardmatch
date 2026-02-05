@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             if (!user) {
                 // Not logged in
                 router.push('/auth/login');
-            } else if (user.email !== 'kurtgavin.design@gmail.com') {
+            } else if (user.email !== 'kurtgavin.design@gmail.com', 'nicolemaaba@gmail.com') {
                 // Logged in but not admin
                 router.push('/');
             }
