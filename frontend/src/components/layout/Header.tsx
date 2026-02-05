@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Heart, Flower2, Ghost, User, LogOut, Settings, Activity, MessageCircle, BarChart2, Info, FileText, Gift, Home } from 'lucide-react';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
 
 // Define all navigation links as requested by the user
 const allLinks = [
@@ -21,7 +21,7 @@ const allLinks = [
 ];
 
 export default function Header() {
-  const { user, loading } = useAuthState();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -70,9 +70,8 @@ export default function Header() {
     setUserMenuOpen(false);
   }, [pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/';
+  const handleLogout = async () => {
+    await logout();
   };
 
   const isActive = (href: string) => {

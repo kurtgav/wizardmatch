@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { CrushListForm } from '@/components/crush/CrushListForm';
@@ -11,7 +11,7 @@ import { getActiveCampaign, getCrushList, submitCrushList, checkActionAllowed } 
 export const dynamic = 'force-dynamic';
 
 export default function CrushListPage() {
-  const { user, loading: authLoading } = useAuthState();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [campaign, setCampaign] = useState<any>(null);
   const [existingCrushes, setExistingCrushes] = useState<any[]>([]);

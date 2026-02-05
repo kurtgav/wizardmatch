@@ -7,7 +7,8 @@ import {
     User, Mail, Phone, Instagram, Calendar, BookOpen,
     GraduationCap, Heart, Edit, MapPin, MessageCircle, Globe, Eye, EyeOff, FileText
 } from 'lucide-react';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
@@ -35,50 +36,48 @@ interface UserProfile {
 }
 
 export default function ProfileView() {
-    const { user, loading } = useAuthState();
+    const { user, loading: authLoading } = useAuth();
     const router = useRouter();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!loading && !user) {
+        if (!authLoading && !user) {
             router.push('/auth/login');
             return;
         }
 
-        if (user) {
-            fetchProfile();
-        }
-    }, [user, loading]);
-
-    const fetchProfile = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-            const response = await fetch(`${baseUrl}/api/users/profile`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                // Handle wrapped response
-                const data = result.success ? result.data : result;
-                setProfile(data);
-            } else {
-                console.error('Failed to fetch profile:', response.statusText);
-                setProfile(null);
+        const fetchProfileData = async () => {
+            if (!user) return;
+            try {
+                // Use api.getProfile() which handles auth token correctly
+                const response = await api.getProfile();
+                if (response.success && response.data) {
+                    setProfile(response.data);
+                } else {
+                    // Fallback/Error handling
+                    setError('Failed to retrieve wizard data.');
+                }
+            } catch (err) {
+                console.error('Error fetching profile:', err);
+                setError('Connection to wizard archives failed.');
+            } finally {
+                setIsLoading(false);
             }
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-            setProfile(null);
-        } finally {
+        };
+
+        if (user) {
+            fetchProfileData();
+        } else if (!authLoading) {
+            // If not user and not loading, we redirected, but cleanup loading state just in case
             setIsLoading(false);
         }
-    };
 
-    if (loading || isLoading) {
+    }, [user, authLoading, router]);
+
+
+    if (authLoading || isLoading) {
         return (
             <div className="min-h-screen flex flex-col bg-retro-cream">
                 <Header />
@@ -92,12 +91,17 @@ export default function ProfileView() {
         );
     }
 
-    if (!profile) {
+    if (error || !profile) {
         return (
             <div className="min-h-screen flex flex-col bg-retro-cream">
                 <Header />
                 <div className="flex-1 flex items-center justify-center">
-                    <p className="font-pixel text-navy">Profile not found</p>
+                    <div className="text-center">
+                        <p className="font-pixel text-navy mb-4">{error || "Profile not found"}</p>
+                        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-navy text-white font-pixel">
+                            RETRY SPELL
+                        </button>
+                    </div>
                 </div>
             </div>
         );

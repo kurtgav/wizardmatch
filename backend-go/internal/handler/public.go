@@ -100,8 +100,15 @@ func (h *PublicHandler) ListTestimonials(c *gin.Context) {
 		return
 	}
 
+	published := make([]repository.Testimonial, 0)
+	for _, t := range testimonials {
+		if t.IsPublished {
+			published = append(published, t)
+		}
+	}
+
 	respondJSON(c, http.StatusOK, gin.H{
 		"success": true,
-		"data":    testimonials,
+		"data":    published,
 	})
 }

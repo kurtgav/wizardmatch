@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
 import { ProfileEditor } from '@/components/profile/ProfileEditor';
 import { updateProfile } from '@/lib/api-campaign';
+import { api } from '@/lib/api';
 import { Heart } from 'lucide-react'; // Though not directly used here, maybe good practice. Wait, I don't need to import Heart here.
 
 // I will just update the setProfile call.
@@ -15,7 +16,7 @@ import Footer from '@/components/layout/Footer';
 export const dynamic = 'force-dynamic';
 
 export default function ProfileEditPage() {
-  const { user, loading: authLoading, mutate } = useAuthState();
+  const { user, loading: authLoading, updateUser } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -32,19 +33,11 @@ export default function ProfileEditPage() {
 
     const loadData = async () => {
       try {
-        // Load user profile from API
         if (user) {
-          const token = localStorage.getItem('token');
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+          const response = await api.getProfile();
 
-          if (response.ok) {
-            const result = await response.json();
-            // Handle wrapped response
-            const profileData = result.success ? result.data : result;
+          if (response.success && response.data) {
+            const profileData = response.data;
             setProfile({
               username: profileData.username || '',
               bio: profileData.bio || '',
@@ -72,6 +65,8 @@ export default function ProfileEditPage() {
 
     if (user) {
       loadData();
+    } else if (!authLoading) {
+      setLoading(false);
     }
   }, [user, authLoading, router]);
 
@@ -82,9 +77,22 @@ export default function ProfileEditPage() {
     try {
       const result = await updateProfile(data);
 
-      // Refresh the user session to get updated data
-      if (mutate) {
-        await mutate();
+      if (result.success && result.data) {
+        // Create a user object compatible with AuthContext
+        // We might need to merge it with existing user to keep ID/email if not returned?
+        // The API returns most fields.
+        const updatedProfile = result.data;
+        const newAuthUser = {
+          ...user!,
+          firstName: updatedProfile.firstName || user!.firstName,
+          lastName: updatedProfile.lastName || user!.lastName,
+          profilePhotoUrl: updatedProfile.profilePhotoUrl || user!.profilePhotoUrl,
+          username: updatedProfile.username || user!.username,
+          program: updatedProfile.program || user!.program,
+          yearLevel: updatedProfile.yearLevel || user!.yearLevel,
+          // Add other fields if present in User interface
+        };
+        updateUser(newAuthUser);
       }
 
       setSuccess('Profile saved successfully!');

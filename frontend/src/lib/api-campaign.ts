@@ -4,17 +4,23 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
-// Helper function to get auth token
-function getAuthToken(): string | null {
+// Helper function to get auth token from Supabase
+async function getAuthToken(): Promise<string | null> {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
   }
   return null;
 }
 
 // Helper function for authenticated API calls
 async function fetchAPI(url: string, options: RequestInit = {}) {
-  const token = getAuthToken();
+  const token = await getAuthToken();
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

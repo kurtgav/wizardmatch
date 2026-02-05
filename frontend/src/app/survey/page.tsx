@@ -1,13 +1,11 @@
-'use client';
-
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuthState } from '@/hooks/useAuthState';
+import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import ProgressBar from '@/components/survey/ProgressBar';
 import QuestionCard from '@/components/survey/QuestionCard';
-import { ChevronLeft, ChevronRight, Flower2, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flower2, Loader2, RefreshCw, Ghost } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -26,7 +24,7 @@ interface GroupedQuestions {
 }
 
 export default function SurveyPage() {
-  const { user, loading: authLoading } = useAuthState();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [questions, setQuestions] = useState<GroupedQuestions>({});
   const [categories, setCategories] = useState<string[]>([]);
@@ -35,12 +33,15 @@ export default function SurveyPage() {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const answersRef = useRef<Record<string, any>>({});
+  const fetchedQuestionsRef = useRef(false);
 
   useEffect(() => {
+    // Redirect if not authenticated
     if (!authLoading && !user) {
       router.push('/auth/login');
       return;
@@ -50,28 +51,43 @@ export default function SurveyPage() {
       router.push('/matches');
       return;
     }
-
-    loadQuestions();
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
+    // Load questions independently of auth
+    if (!fetchedQuestionsRef.current) {
+      loadQuestions();
+      fetchedQuestionsRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user && !loading && categories.length > 0) {
       loadProgress();
     }
-  }, [user]);
+  }, [user, loading, categories.length]);
 
   async function loadQuestions() {
     try {
+      setLoading(true);
+      setQuestionsError(null);
       console.log('Fetching questions...');
       const response = await api.getQuestions();
       if (response.success) {
-        setQuestions(response.data);
-        const cats = Object.keys(response.data);
-        setCategories(cats);
-        console.log(`Loaded ${cats.length} categories.`);
+        if (Object.keys(response.data).length === 0) {
+          setQuestionsError("No questions found in the crystal ball.");
+        } else {
+          setQuestions(response.data);
+          const cats = Object.keys(response.data);
+          setCategories(cats);
+          console.log(`Loaded ${cats.length} categories.`);
+        }
+      } else {
+        setQuestionsError("Failed to interpret the wizard's scrolls.");
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
+      setQuestionsError("Connection to the wizard tower failed.");
     } finally {
       setLoading(false);
     }
@@ -206,7 +222,7 @@ export default function SurveyPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-retro-cream">
         <Header />
@@ -217,13 +233,28 @@ export default function SurveyPage() {
     );
   }
 
-  if (categories.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-retro-cream">
         <Header />
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-          <p className="font-pixel text-lg text-navy mb-4">WIZARDS ARE PREPARING THE QUESTIONS...</p>
+          <p className="font-pixel text-lg text-navy mb-4">SUMMONING THE QUESTIONS...</p>
           <Loader2 className="w-8 h-8 text-retro-pink animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (questionsError || categories.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col bg-retro-cream">
+        <Header />
+        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+          <Ghost className="w-16 h-16 text-navy/20 mb-4" />
+          <p className="font-pixel text-lg text-navy mb-4">{questionsError || "THE CRYSTAL BALL IS EMPTY."}</p>
+          <Button onClick={loadQuestions} className="font-pixel bg-navy text-white hover:bg-navy/90">
+            <RefreshCw className="w-4 h-4 mr-2" /> RETRY SPELL
+          </Button>
         </div>
       </div>
     );

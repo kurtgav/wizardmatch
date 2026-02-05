@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Commissioner, VT323 } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/hooks/useAuth';
 import { ToastProvider } from '@/contexts/ToastContext';
 
 const inter = Inter({
@@ -49,7 +50,9 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className={`${inter.variable} ${commissioner.variable} ${vt323.variable} font-body antialiased`}>
-        <ToastProvider>{children}</ToastProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

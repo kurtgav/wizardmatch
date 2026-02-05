@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 interface User {
   id: string;
   email: string;
+  username?: string;
   firstName: string;
   lastName: string;
   program: string;
