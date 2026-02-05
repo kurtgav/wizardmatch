@@ -11,26 +11,29 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the access token and refresh token from the URL hash
-        const hash = window.location.hash;
-        const search = window.location.search;
+        // Wait for Supabase to process the OAuth callback from URL
+        // The URL contains access_token and refresh_token parameters
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Let Supabase handle the session from the URL
-        const { data, error } = await supabase().auth.getSession();
+        // Now get the session - Supabase should have processed the tokens
+        const { data: sessionData, error: sessionError } = await supabase().auth.getSession();
 
-        if (error) {
-          console.error('Auth callback error:', error);
-          router.push('/auth/login?error=' + encodeURIComponent(error.message));
+        if (sessionError) {
+          console.error('Auth callback error:', sessionError);
+          router.push('/auth/login?error=' + encodeURIComponent(sessionError.message));
           return;
         }
 
-        if (data.session) {
-          // Successfully authenticated, check if user has completed survey
-          const { data: userData } = await supabase()
+        if (sessionData.session) {
+          // Successfully authenticated!
+          const userId = sessionData.session.user.id;
+
+          // Check if user has completed survey
+          const { data: userData, error: userError } = await supabase()
             .from('users')
             .select('surveyCompleted')
-            .eq('id', data.session.user.id)
-            .single();
+            .eq('id', userId)
+            .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors if user doesn't exist
 
           if (userData?.surveyCompleted) {
             router.push('/matches');
@@ -38,8 +41,12 @@ function AuthCallbackContent() {
             router.push('/survey');
           }
         } else {
-          // No session, redirect to login
-          router.push('/auth/login');
+          // No session found - check if there's an error in the URL
+          const error = searchParams.get('error');
+          const errorDescription = searchParams.get('error_description');
+
+          console.error('No session after callback', { error, errorDescription });
+          router.push('/auth/login?error=' + encodeURIComponent(errorDescription || 'Authentication failed'));
         }
       } catch (err) {
         console.error('Auth callback error:', err);
@@ -48,7 +55,7 @@ function AuthCallbackContent() {
     };
 
     handleAuthCallback();
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-navy via-purple-900 to-navy flex items-center justify-center">
